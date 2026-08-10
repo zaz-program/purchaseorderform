@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Order Interaktif - PT Nusantara Retail Jaya</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Completely borderless & boxless inputs for natural live document editing */
+        .input-clean {
+            background-color: transparent !important;
+            border: 1px solid transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
+            transition: none !important;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .input-clean:hover, .input-clean:focus {
+            border-color: transparent !important;
+            background-color: transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Hide number input spinners */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Freeform contenteditable focus styling */
+        [contenteditable="true"]:focus {
+            outline: none !important;
+            background-color: transparent !important;
+        }
+
+        /* Column Resizer Handle Styling */
+        th.resizable-th {
+            position: relative;
+            user-select: none;
+        }
+
+        .col-resizer {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            cursor: col-resize;
+            user-select: none;
+            z-index: 20;
+            transition: background-color 0.15s ease;
+        }
+
+        .col-resizer:hover, .col-resizer.resizing {
+            background-color: #3b82f6 !important;
+        }
+
+        /* Screen column width defaults */
+        .col-nama {
+            min-width: 260px;
+        }
+        .supplier-mode .col-nama {
+            min-width: 320px;
+        }
+
+        /* Print Media Setup with Repeating Running Headers on Page Breaks */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print, .col-resizer {
+                display: none !important;
+            }
+            html, body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 10px;
+                overflow: visible !important;
+                height: auto !important;
+            }
+            .po-container {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow: visible !important;
+            }
+            
+            /* Master Print Table Structure for Repeating Header on Every Page Break */
+            .master-print-table {
+                display: table !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
+                table-layout: fixed !important;
+            }
+            thead.print-header {
+                display: table-header-group !important;
+            }
+            tbody.print-body, tbody#table-footer-body {
+                display: table-row-group !important;
+            }
+
+            /* Convert Flex/Grid to Table layout inside the head for Chrome print header repeating compatibility */
+            .meta-address-grid {
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
+                border-spacing: 0.75rem 0 !important;
+                margin-bottom: 0.75rem !important;
+            }
+            .meta-address-grid > div {
+                display: table-cell !important;
+                vertical-align: top !important;
+                width: 50% !important;
+            }
+            .meta-2col-grid {
+                display: table !important;
+                width: 100% !important;
+                table-layout: fixed !important;
+            }
+            .meta-2col-grid > div {
+                display: inline-block !important;
+                width: 48% !important;
+                vertical-align: top !important;
+                margin-bottom: 0.25rem !important;
+            }
+
+            /* Prevent awkward splits inside rows, notes, and signature blocks */
+            tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            #signatures-tr, #notes-tr, #summary-tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            .input-clean {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+            .card-box {
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.75rem !important;
+                background-color: #ffffff !important;
+                padding: 0.75rem !important;
+            }
+            .card-box-gray {
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.75rem !important;
+                background-color: #f8fafc !important;
+                padding: 0.75rem !important;
+            }
+
+            .overflow-x-auto {
+                overflow: visible !important;
+            }
+
+            /* Hide price columns in print for supplier view */
+            .supplier-mode .col-price, .supplier-mode #summary-tr {
+                display: none !important;
+            }
+
+            /* Right-aligned Subtotal Summary Card fix for Print */
+            #summary-section {
+                display: flex !important;
+                justify-content: flex-end !important;
+                width: 100% !important;
+                margin-bottom: 1rem !important;
+            }
+            #summary-section > div {
+                width: 310px !important;
+                max-width: 310px !important;
+                margin-left: auto !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                background-color: #ffffff !important;
+            }
+
+            @page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-2 md:p-6 min-h-screen">
+
+    <!-- Top Action Toolbar -->
+    <div class="max-w-6xl mx-auto mb-6 bg-white p-4 rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-4 no-print border border-gray-200">
+        <div class="flex flex-wrap items-center gap-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Moda Tampilan:</span>
+            <div class="inline-flex rounded-lg shadow-sm bg-gray-100 p-1" role="group">
+                <button type="button" id="btn-supplier" onclick="switchView('supplier')" 
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent bg-white text-blue-700 shadow-sm font-semibold">
+                    Versi Supplier (Tanpa Harga)
+                </button>
+                <button type="button" id="btn-internal" onclick="switchView('internal')" 
+                    class="px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent text-gray-600 hover:text-gray-900">
+                    Versi Internal (Lengkap)
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <button onclick="addNewRow()" class="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition border border-blue-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Tambah Item
+            </button>
+            <button onclick="deleteLastRow()" class="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition border border-red-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                Hapus Item
+            </button>
+            <button onclick="resetColumnWidths()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition border border-slate-300" title="Atur Ulang Lebar Kolom">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Reset Lebar Kolom
+            </button>
+            <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-2 shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 000-4h-6a2 2 0 000 4zm8-12V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4h10z"></path></svg>
+                Cetak / Simpan PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- PO Sheet Container -->
+    <div id="po-document" class="po-container supplier-mode max-w-6xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-md text-xs border border-gray-200">
+        
+        <!-- Master Table Structure for Auto-Repeating Header on Every Page Break -->
+        <table class="master-print-table w-full text-left border-collapse">
+            
+            <!-- REPEATING HEADER (Repeats on every printed page break, including page 2 & 3) -->
+            <thead class="print-header">
+                <!-- Row 1: Document Header Title & Address Cards -->
+                <tr>
+                    <td id="header-card-td" colspan="11" class="p-0 border-0 align-top pb-3">
+                        <!-- Document Header Title (Text nodes for seamless multi-page print cloning) -->
+                        <div class="border-b-2 border-gray-900 pb-2 mb-3">
+                            <div>
+                                <div contenteditable="true" id="doc-title" class="outline-none text-2xl font-bold tracking-tight text-gray-900 uppercase">PURCHASE ORDER</div>
+                                <div contenteditable="true" id="company-name" class="outline-none text-sm font-semibold text-gray-700 mt-0.5">PT NUSANTARA RETAIL JAYA</div>
+                            </div>
+                        </div>
+
+                        <!-- 2-Column Meta & Addresses Grid -->
+                        <div class="meta-address-grid grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch">
+                            
+                            <!-- Left Column Card: Freeform Ship To Address -->
+                            <div class="card-box border border-gray-200 rounded-xl p-4 bg-white flex flex-col justify-between shadow-sm">
+                                <div contenteditable="true" class="outline-none text-xs text-gray-700 leading-relaxed space-y-1">
+                                    <div class="font-bold text-gray-900">Dengan Hormat,</div>
+                                    <div class="text-gray-500 text-[11px] mb-2">Bersama ini kami sampaikan Order Pembelian untuk dikirim ke:</div>
+                                    <hr class="border-gray-200 my-2">
+                                    <div class="font-bold text-gray-900">Alamat Kirim:</div>
+                                    <div class="font-bold text-gray-900">Grand Mart Superstore - BSD</div>
+                                    <div class="text-gray-600">Gudang Utama & Receiving Bay BSD</div>
+                                    <div class="text-gray-600">Jl. BSD Boulevard Utara No. 88, Lengkong Karya, Serpong</div>
+                                    <div class="text-gray-600">Tangerang Selatan, Banten, IDN</div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column Stack: Meta Box + Freeform Supplier Box -->
+                            <div class="space-y-3 flex flex-col justify-between">
+                                
+                                <!-- Right Box 1: Meta Grid (Gray Box - Text Nodes for Print Duplication) -->
+                                <div class="card-box-gray border border-gray-200 rounded-xl p-3.5 bg-slate-50/80 shadow-sm">
+                                    <div class="meta-2col-grid grid grid-cols-2 gap-y-2.5 gap-x-4">
+                                        <div>
+                                            <span class="text-gray-500 text-[11px] block font-medium">Nomor P.O:</span>
+                                            <div contenteditable="true" id="po-number" class="outline-none font-bold text-gray-900 text-sm">NRJ-PO-20260810-001</div>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 text-[11px] block font-medium">Tanggal P.O:</span>
+                                            <div contenteditable="true" id="po-date" class="outline-none font-semibold text-gray-800 text-xs">10 Aug 2026</div>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 text-[11px] block font-medium">Tanggal Kirim:</span>
+                                            <div contenteditable="true" id="ship-date" class="outline-none font-semibold text-gray-800 text-xs">12 Aug 2026</div>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 text-[11px] block font-medium">Tanggal Kadaluarsa:</span>
+                                            <div contenteditable="true" id="expiry-date" class="outline-none font-bold text-red-600 text-xs">25 Aug 2026</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Box 2: Freeform Supplier Info Card -->
+                                <div class="card-box border border-gray-200 rounded-xl p-3.5 bg-white shadow-sm">
+                                    <div contenteditable="true" class="outline-none text-xs text-gray-700 leading-relaxed space-y-1">
+                                        <div class="font-bold text-gray-900">Kepada Yth:</div>
+                                        <div class="font-bold text-gray-900">PT. Megah Distribusi Nusantara</div>
+                                        <div class="text-gray-600">Kawasan Industri Pulogadung, Jl. Rawa Gelam II No. 5, Jakarta Timur</div>
+                                        <div class="text-gray-600">Phone: 021-4608888 / 081298765432</div>
+                                        <div class="text-gray-600">Fax: 021-4608889</div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Row 2: Column Header Row (Repeats automatically beneath document header cards) -->
+                <tr class="col-header-row bg-gray-100 text-gray-800 uppercase font-semibold text-[10px] tracking-wider border-b border-gray-300">
+                    <th class="col-no resizable-th p-1.5 border border-gray-300 text-center w-10">No.</th>
+                    <th class="col-sku resizable-th p-1.5 border border-gray-300 w-28">SKU</th>
+                    <th class="col-barcode resizable-th p-1.5 border border-gray-300 w-36">Barcode</th>
+                    <th class="col-nama resizable-th p-1.5 border border-gray-300">Nama Barang</th>
+                    <th class="col-qty resizable-th p-1.5 border border-gray-300 text-right w-16">Qty</th>
+                    <th class="col-satuan resizable-th p-1.5 border border-gray-300 text-center w-20">Satuan</th>
+                    
+                    <!-- Internal Only Columns -->
+                    <th class="col-price col-harga resizable-th p-1.5 border border-gray-300 text-right hidden w-32">Harga Satuan</th>
+                    <th class="col-price col-disc1 resizable-th p-1.5 border border-gray-300 text-right hidden w-20">Disc 1 (%)</th>
+                    <th class="col-price col-disc2 resizable-th p-1.5 border border-gray-300 text-right hidden w-20">Disc 2 (%)</th>
+                    <th class="col-price col-discamt resizable-th p-1.5 border border-gray-300 text-right hidden w-28">Disc Amt</th>
+                    <th class="col-price col-jumlah resizable-th p-1.5 border border-gray-300 text-right hidden w-32">Jumlah</th>
+                </tr>
+            </thead>
+
+            <!-- Table Body containing all Items -->
+            <tbody id="items-table-body" class="print-body divide-y divide-gray-200">
+                <!-- Dynamic Rows Rendered Via JS -->
+            </tbody>
+
+            <!-- Master Table Footer Body (Guarantees header repetition on signature-only page breaks) -->
+            <tbody id="table-footer-body">
+                
+                <!-- Summary Row -->
+                <tr id="summary-tr" class="border-0">
+                    <td id="summary-td" colspan="11" class="p-0 border-0 pt-4">
+                        <div id="summary-section" class="flex justify-end mb-4 hidden">
+                            <div class="w-full sm:w-80 text-xs border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                                <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200">
+                                    <span class="text-gray-600 font-medium">Sub Total:</span>
+                                    <span id="sub-total-val" class="font-semibold text-gray-900">0</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200">
+                                    <span class="text-gray-600 font-medium">Diskon Tambahan:</span>
+                                    <div class="w-28 text-right">
+                                        <input type="number" id="extra-discount" oninput="calculateTotals()" class="input-clean text-right font-semibold text-gray-900" value="0" min="0">
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-gray-600 font-medium">PPn (</span>
+                                        <input type="number" id="ppn-rate" oninput="calculateTotals()" class="input-clean w-10 text-center font-semibold text-gray-900" value="0" min="0" max="100">
+                                        <span class="text-gray-600 font-medium">%):</span>
+                                    </div>
+                                    <span id="ppn-val" class="font-semibold text-gray-900">0</span>
+                                </div>
+
+                                <div class="flex justify-between items-center px-3 py-2.5 bg-gray-50 font-bold text-sm text-gray-900">
+                                    <span>Total Keseluruhan:</span>
+                                    <span id="grand-total-val" class="text-blue-700 font-extrabold">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Notes Row -->
+                <tr id="notes-tr" class="border-0">
+                    <td id="notes-td" colspan="11" class="p-0 border-0 pt-2">
+                        <div class="card-box border border-gray-200 rounded-xl p-4 bg-white mb-4 text-xs shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <p class="font-bold text-gray-900 text-xs">Note / Catatan Syarat & Ketentuan:</p>
+                                <button onclick="addNoteItem()" class="no-print text-[11px] text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    Tambah Catatan
+                                </button>
+                            </div>
+                            
+                            <ul id="notes-list" class="list-disc pl-5 space-y-2 text-xs text-gray-800 marker:text-gray-700">
+                                <!-- Dynamic Notes -->
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Signatures Row -->
+                <tr id="signatures-tr" class="border-0">
+                    <td id="signatures-td" colspan="11" class="p-0 border-0 pt-2">
+                        <div class="pt-4 border-t border-gray-200 mt-2">
+                            <div class="grid grid-cols-2 gap-8 text-center text-xs mb-6">
+                                <div>
+                                    <div contenteditable="true" id="sign-title-1" class="outline-none text-center text-gray-600 mb-14">Mengetahui,</div>
+                                    <div contenteditable="true" id="sign-name-1" class="outline-none text-center font-medium text-gray-800 border-t border-gray-400 pt-1 w-48 mx-auto">( Tanda Tangan & Cap )</div>
+                                </div>
+                                <div>
+                                    <div contenteditable="true" id="sign-title-2" class="outline-none text-center text-gray-600 mb-14">Hormat Kami,</div>
+                                    <div contenteditable="true" id="sign-name-2" class="outline-none text-center font-medium text-gray-800 border-t border-gray-400 pt-1 w-48 mx-auto">( Tim Purchasing / Admin )</div>
+                                </div>
+                            </div>
+
+                            <!-- Footer Disclaimer Note -->
+                            <div class="text-[10px] text-gray-500 flex flex-wrap justify-end items-center pt-2 border-t border-gray-100 gap-2">
+                                <div contenteditable="true" id="footer-note" class="outline-none text-right italic text-gray-400">Dokumen komputer ini sah tanpa tanda tangan basah jika diterbitkan melalui sistem terverifikasi.</div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <script>
+        const defaultItems = [
+            { sku: "SKU-1001", barcode: "8991001000012", name: "Indomie Goreng Spesial 85g (Karton / 40 Pcs)", qty: 5, unit: "Karton", price: 112000, disc1: 2, disc2: 0 },
+            { sku: "SKU-1002", barcode: "8992761000025", name: "Minyak Goreng Pouch 2 Liter (Karton / 6 Pouch)", qty: 3, unit: "Karton", price: 215000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1003", barcode: "8999999000038", name: "Susu UHT Full Cream 1000ml (Karton / 12 Pcs)", qty: 2, unit: "Karton", price: 210000, disc1: 1.5, disc2: 0 },
+            { sku: "SKU-1004", barcode: "8991389000041", name: "Teh Melati Kemasan Botol 350ml (Dus / 24 Botol)", qty: 2, unit: "Dus", price: 78000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1005", barcode: "8998888000055", name: "Kopi Instan 3in1 Bag 30x20g", qty: 4, unit: "Bag", price: 45000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1006", barcode: "8997777000062", name: "Gula Pasir Kristal Putih 1kg (Karton / 20 Pcs)", qty: 5, unit: "Karton", price: 290000, disc1: 1, disc2: 0 },
+            { sku: "SKU-1007", barcode: "8996666000079", name: "Beras Pandan Wangi Super 5kg", qty: 10, unit: "Karung", price: 78000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1008", barcode: "8995555000086", name: "Sabun Cuci Piring Liquid 780ml (Karton / 12 Pcs)", qty: 3, unit: "Karton", price: 165000, disc1: 2, disc2: 0 },
+            { sku: "SKU-1009", barcode: "8994444000093", name: "Deterjen Bubuk Anti Noda 1.8kg (Karton / 6 Pcs)", qty: 4, unit: "Karton", price: 210000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1010", barcode: "8993333000109", name: "Pembersih Lantai Aroma Citrus 800ml (Karton / 12 Pcs)", qty: 2, unit: "Karton", price: 135000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1011", barcode: "8992222000116", name: "Air Mineral Botol 600ml (Karton / 24 Botol)", qty: 15, unit: "Karton", price: 48000, disc1: 3, disc2: 0 },
+            { sku: "SKU-1012", barcode: "8991111000123", name: "Biskuit Kaleng Assorted 650g (Dus / 6 Kaleng)", qty: 5, unit: "Dus", price: 285000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1013", barcode: "8990000000130", name: "Minyak Zaitun Extra Virgin 500ml", qty: 6, unit: "Botol", price: 95000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1014", barcode: "8991234000147", name: "Saus Sambal Extra Pedas 335ml (Karton / 24 Pcs)", qty: 3, unit: "Karton", price: 180000, disc1: 1, disc2: 0 },
+            { sku: "SKU-1015", barcode: "8992345000154", name: "Kecap Manis Botol 600ml (Karton / 12 Pcs)", qty: 4, unit: "Karton", price: 220000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1016", barcode: "8993456000161", name: "Margarin Serbaguna 200g (Karton / 60 Pcs)", qty: 2, unit: "Karton", price: 340000, disc1: 2, disc2: 0 },
+            { sku: "SKU-1017", barcode: "8994567000178", name: "Tissue Wajah 250 Sheets (Karton / 48 Packs)", qty: 3, unit: "Karton", price: 395000, disc1: 0, disc2: 0 },
+            { sku: "SKU-1018", barcode: "8995678000185", name: "Keripik Kentang Original 68g (Dus / 30 Pcs)", qty: 5, unit: "Dus", price: 280000, disc1: 0, disc2: 0 }
+        ];
+
+        const defaultNotes = [
+            "Harga sudah termasuk pajak.",
+            "Mohon informasi jika ada produk yang stok tidak tersedia atau harga tidak sesuai. Jika tidak memberikan informasi apapun mengenai hal diatas, kami menganggap pengiriman akan sesuai dengan PO kami.",
+            "Produk yang tidak sesuai spesifikasi, tidak akan diterima oleh toko kami.",
+            "Produk yang dikirim dengan masa expired kurang dari 6 (Enam) bulan, tidak akan diterima oleh toko kami.",
+            "PO yang dikirim setelah tanggal kadaluarsa, tidak dapat diterima oleh toko."
+        ];
+
+        let currentItems = JSON.parse(JSON.stringify(defaultItems));
+        let currentNotes = [...defaultNotes];
+        let activeMode = 'supplier';
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatNum(num) {
+            if (isNaN(num) || num === null || num === undefined) return "0";
+            return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(num);
+        }
+
+        function initColumnResizers() {
+            const headerRow = document.querySelector('.col-header-row');
+            if (!headerRow) return;
+
+            const headers = headerRow.querySelectorAll('th');
+            headers.forEach((th) => {
+                const existingResizer = th.querySelector('.col-resizer');
+                if (existingResizer) existingResizer.remove();
+
+                const resizer = document.createElement('div');
+                resizer.className = 'col-resizer no-print';
+                th.appendChild(resizer);
+
+                let startX, startWidth;
+
+                resizer.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    startX = e.clientX;
+                    startWidth = th.offsetWidth;
+
+                    resizer.classList.add('resizing');
+                    document.body.style.cursor = 'col-resize';
+
+                    function onMouseMove(e) {
+                        const widthDiff = e.clientX - startX;
+                        const newWidth = Math.max(35, startWidth + widthDiff);
+                        th.style.width = newWidth + 'px';
+                        th.style.minWidth = newWidth + 'px';
+                    }
+
+                    function onMouseUp() {
+                        resizer.classList.remove('resizing');
+                        document.body.style.cursor = '';
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                    }
+
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+                });
+            });
+        }
+
+        function resetColumnWidths() {
+            const headers = document.querySelectorAll('.col-header-row th');
+            headers.forEach(th => {
+                th.style.width = '';
+                th.style.minWidth = '';
+            });
+            showToast("Ukuran lebar kolom telah diatur ulang.");
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('items-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            currentItems.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                
+                const qty = parseFloat(item.qty) || 0;
+                const price = parseFloat(item.price) || 0;
+                
+                const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
+                const d2 = Math.min(100, Math.max(0, parseFloat(item.disc2) || 0));
+
+                let discountedPrice = price;
+                discountedPrice *= (1 - d1 / 100);
+                discountedPrice *= (1 - d2 / 100);
+
+                const discAmount = (price - discountedPrice) * qty;
+                const lineTotal = qty * discountedPrice;
+
+                tr.innerHTML = `
+                    <td class="col-no p-1.5 border border-gray-300 text-center font-medium text-[11px]">${index + 1}</td>
+                    <td class="col-sku p-1 border border-gray-300 font-mono">
+                        <input type="text" class="input-clean px-1 text-[11px]" value="${escapeHtml(item.sku)}" onchange="updateItem(${index}, 'sku', this.value)">
+                    </td>
+                    <td class="col-barcode p-1 border border-gray-300 font-mono">
+                        <input type="text" class="input-clean px-1 text-[11px]" value="${escapeHtml(item.barcode)}" onchange="updateItem(${index}, 'barcode', this.value)">
+                    </td>
+                    <td class="col-nama p-1 border border-gray-300 font-medium">
+                        <input type="text" class="input-clean px-1 text-[11px]" value="${escapeHtml(item.name)}" onchange="updateItem(${index}, 'name', this.value)">
+                    </td>
+                    <td class="col-qty p-1 border border-gray-300 text-right">
+                        <input type="number" step="0.01" class="input-clean px-1 text-right text-[11px] font-semibold" value="${item.qty}" oninput="updateItem(${index}, 'qty', this.value)">
+                    </td>
+                    <td class="col-satuan p-1 border border-gray-300 text-center">
+                        <input type="text" class="input-clean px-1 text-center text-[11px]" value="${escapeHtml(item.unit)}" onchange="updateItem(${index}, 'unit', this.value)">
+                    </td>
+                    
+                    <td class="col-price col-harga p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden' : ''}">
+                        <input type="number" class="input-clean px-1 text-right text-[11px] font-mono font-medium" value="${item.price}" oninput="updateItem(${index}, 'price', this.value)">
+                    </td>
+                    <td class="col-price col-disc1 p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden' : ''}">
+                        <input type="number" min="0" max="100" step="any" class="input-clean px-1 text-right text-[11px] font-mono" value="${item.disc1}" oninput="updateItem(${index}, 'disc1', this.value)" placeholder="0">
+                    </td>
+                    <td class="col-price col-disc2 p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden' : ''}">
+                        <input type="number" min="0" max="100" step="any" class="input-clean px-1 text-right text-[11px] font-mono" value="${item.disc2}" oninput="updateItem(${index}, 'disc2', this.value)" placeholder="0">
+                    </td>
+                    <td class="col-price col-discamt p-1.5 border border-gray-300 text-right font-mono text-[11px] whitespace-nowrap ${activeMode === 'supplier' ? 'hidden' : ''}">
+                        ${formatNum(discAmount)}
+                    </td>
+                    <td class="col-price col-jumlah p-1.5 border border-gray-300 text-right font-semibold font-mono text-[11px] whitespace-nowrap ${activeMode === 'supplier' ? 'hidden' : ''}">
+                        ${formatNum(lineTotal)}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calculateTotals();
+        }
+
+        function updateItem(index, field, value) {
+            currentItems[index][field] = value;
+            if (['qty', 'price', 'disc1', 'disc2'].includes(field)) {
+                updateRowCalculations(index);
+            }
+        }
+
+        function updateRowCalculations(index) {
+            const tbody = document.getElementById('items-table-body');
+            if (!tbody || !tbody.children[index]) return;
+
+            const tr = tbody.children[index];
+            const item = currentItems[index];
+
+            const qty = parseFloat(item.qty) || 0;
+            const price = parseFloat(item.price) || 0;
+
+            const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
+            const d2 = Math.min(100, Math.max(0, parseFloat(item.disc2) || 0));
+
+            let discountedPrice = price;
+            discountedPrice *= (1 - d1 / 100);
+            discountedPrice *= (1 - d2 / 100);
+
+            const discAmount = (price - discountedPrice) * qty;
+            const lineTotal = qty * discountedPrice;
+
+            const discCell = tr.children[9];
+            const totalCell = tr.children[10];
+
+            if (discCell) discCell.innerText = formatNum(discAmount);
+            if (totalCell) totalCell.innerText = formatNum(lineTotal);
+
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let subtotal = 0;
+
+            currentItems.forEach(item => {
+                const qty = parseFloat(item.qty) || 0;
+                const price = parseFloat(item.price) || 0;
+                
+                const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
+                const d2 = Math.min(100, Math.max(0, parseFloat(item.disc2) || 0));
+
+                let discountedPrice = price;
+                discountedPrice *= (1 - d1 / 100);
+                discountedPrice *= (1 - d2 / 100);
+
+                subtotal += (qty * discountedPrice);
+            });
+
+            const extraDiscount = parseFloat(document.getElementById('extra-discount')?.value) || 0;
+            const ppnRate = parseFloat(document.getElementById('ppn-rate')?.value) || 0;
+
+            const afterExtraDisc = Math.max(0, subtotal - extraDiscount);
+            const ppnAmount = afterExtraDisc * (ppnRate / 100);
+            const grandTotal = afterExtraDisc + ppnAmount;
+
+            const subEl = document.getElementById('sub-total-val');
+            const ppnEl = document.getElementById('ppn-val');
+            const grandEl = document.getElementById('grand-total-val');
+
+            if (subEl) subEl.innerText = formatNum(subtotal);
+            if (ppnEl) ppnEl.innerText = formatNum(ppnAmount);
+            if (grandEl) grandEl.innerText = formatNum(grandTotal);
+        }
+
+        function addNewRow() {
+            currentItems.push({
+                sku: '',
+                barcode: '',
+                name: 'Item Baru',
+                qty: 1,
+                unit: 'Pcs',
+                price: 0,
+                disc1: 0,
+                disc2: 0
+            });
+            renderTable();
+        }
+
+        function deleteLastRow() {
+            if (currentItems.length <= 1) {
+                showToast("Minimal harus ada 1 baris item dalam PO.");
+                return;
+            }
+            currentItems.pop();
+            renderTable();
+        }
+
+        function renderNotes() {
+            const list = document.getElementById('notes-list');
+            if (!list) return;
+            list.innerHTML = '';
+
+            currentNotes.forEach((note, idx) => {
+                const li = document.createElement('li');
+                li.className = 'group pl-1 text-gray-800 leading-relaxed';
+                li.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <div contenteditable="true" 
+                             class="flex-1 outline-none px-1 -ml-1 transition-all" 
+                             onblur="updateNote(${idx}, this.innerText)">${escapeHtml(note)}</div>
+                        <button onclick="deleteNote(${idx})" class="no-print text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition p-0.5 shrink-0" title="Hapus Catatan">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function updateNote(idx, val) {
+            currentNotes[idx] = val.trim();
+        }
+
+        function addNoteItem() {
+            currentNotes.push("Catatan syarat dan ketentuan tambahan baru.");
+            renderNotes();
+        }
+
+        function deleteNote(idx) {
+            currentNotes.splice(idx, 1);
+            renderNotes();
+        }
+
+        function switchView(mode) {
+            activeMode = mode;
+            const poDoc = document.getElementById('po-document');
+            const priceCols = document.querySelectorAll('.col-price');
+            const summaryTr = document.getElementById('summary-tr');
+            const summarySec = document.getElementById('summary-section');
+            const btnSupplier = document.getElementById('btn-supplier');
+            const btnInternal = document.getElementById('btn-internal');
+
+            const totalCols = (mode === 'internal') ? 11 : 6;
+            ['header-card-td', 'summary-td', 'notes-td', 'signatures-td'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.colSpan = totalCols;
+            });
+
+            if (mode === 'internal') {
+                poDoc?.classList.remove('supplier-mode');
+                priceCols.forEach(el => el.classList.remove('hidden'));
+                summaryTr?.classList.remove('hidden');
+                summarySec?.classList.remove('hidden');
+                
+                if (btnInternal) btnInternal.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent bg-white text-blue-700 shadow-sm font-semibold";
+                if (btnSupplier) btnSupplier.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent text-gray-600 hover:text-gray-900";
+            } else {
+                poDoc?.classList.add('supplier-mode');
+                priceCols.forEach(el => el.classList.add('hidden'));
+                summaryTr?.classList.add('hidden');
+                summarySec?.classList.add('hidden');
+
+                if (btnSupplier) btnSupplier.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent bg-white text-blue-700 shadow-sm font-semibold";
+                if (btnInternal) btnInternal.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent text-gray-600 hover:text-gray-900";
+            }
+        }
+
+        function showToast(message) {
+            let toast = document.getElementById('toast-msg');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-msg';
+                toast.className = 'fixed bottom-5 right-5 bg-gray-900 text-white text-xs px-4 py-2.5 rounded-lg shadow-lg z-50 transition-opacity duration-300 no-print';
+                document.body.appendChild(toast);
+            }
+            toast.innerText = message;
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 3000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderNotes();
+            renderTable();
+            switchView('supplier');
+            initColumnResizers();
+        });
+    </script>
+</body>
+</html>

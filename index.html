@@ -12,7 +12,7 @@
             font-family: 'Inter', sans-serif;
         }
         
-        /* Completely borderless & boxless inputs for natural live document editing */
+        /* Clean borderless inputs for live document editing */
         .input-clean {
             background-color: transparent !important;
             border: 1px solid transparent !important;
@@ -53,29 +53,31 @@
 
         .col-resizer {
             position: absolute;
-            right: 0;
+            right: -3px;
             top: 0;
             bottom: 0;
-            width: 6px;
+            width: 7px;
             cursor: col-resize;
             user-select: none;
-            z-index: 20;
+            z-index: 30;
             transition: background-color 0.15s ease;
         }
 
         .col-resizer:hover, .col-resizer.resizing {
-            background-color: #3b82f6 !important;
+            background-color: #2563eb !important;
         }
 
-        /* Screen column width defaults */
-        .col-nama {
-            min-width: 260px;
-        }
-        .supplier-mode .col-nama {
-            min-width: 320px;
+        .hidden-col {
+            display: none !important;
         }
 
-        /* Print Media Setup with Repeating Running Headers on Page Breaks */
+        /* Master Table fixed layout for exact percentage column sync in screen & print */
+        #po-main-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        /* Print Media Setup */
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
@@ -101,8 +103,7 @@
                 overflow: visible !important;
             }
             
-            /* Master Print Table Structure for Repeating Header on Every Page Break */
-            .master-print-table {
+            #po-main-table {
                 display: table !important;
                 width: 100% !important;
                 border-collapse: collapse !important;
@@ -115,7 +116,6 @@
                 display: table-row-group !important;
             }
 
-            /* Convert Flex/Grid to Table layout inside the head for Chrome print header repeating compatibility */
             .meta-address-grid {
                 display: table !important;
                 width: 100% !important;
@@ -140,7 +140,6 @@
                 margin-bottom: 0.25rem !important;
             }
 
-            /* Prevent awkward splits inside rows, notes, and signature blocks */
             tr {
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
@@ -170,16 +169,10 @@
                 padding: 0.75rem !important;
             }
 
-            .overflow-x-auto {
-                overflow: visible !important;
-            }
-
-            /* Hide price columns in print for supplier view */
             .supplier-mode .col-price, .supplier-mode #summary-tr {
                 display: none !important;
             }
 
-            /* Right-aligned Subtotal Summary Card fix for Print */
             #summary-section {
                 display: flex !important;
                 justify-content: flex-end !important;
@@ -243,15 +236,19 @@
     <!-- PO Sheet Container -->
     <div id="po-document" class="po-container supplier-mode max-w-6xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-md text-xs border border-gray-200">
         
-        <!-- Master Table Structure for Auto-Repeating Header on Every Page Break -->
-        <table class="master-print-table w-full text-left border-collapse">
+        <!-- Master Table Structure -->
+        <table id="po-main-table" class="w-full text-left border-collapse">
             
-            <!-- REPEATING HEADER (Repeats on every printed page break, including page 2 & 3) -->
+            <!-- Dynamic Colgroup for Screen & PDF Width Alignment -->
+            <colgroup id="table-colgroup">
+                <!-- Dynamically populated via JS -->
+            </colgroup>
+
+            <!-- REPEATING HEADER -->
             <thead class="print-header">
                 <!-- Row 1: Document Header Title & Address Cards -->
                 <tr>
-                    <td id="header-card-td" colspan="11" class="p-0 border-0 align-top pb-3">
-                        <!-- Document Header Title (Text nodes for seamless multi-page print cloning) -->
+                    <td id="header-card-td" colspan="6" class="p-0 border-0 align-top pb-3">
                         <div class="border-b-2 border-gray-900 pb-2 mb-3">
                             <div>
                                 <div contenteditable="true" id="doc-title" class="outline-none text-2xl font-bold tracking-tight text-gray-900 uppercase">PURCHASE ORDER</div>
@@ -279,7 +276,7 @@
                             <!-- Right Column Stack: Meta Box + Freeform Supplier Box -->
                             <div class="space-y-3 flex flex-col justify-between">
                                 
-                                <!-- Right Box 1: Meta Grid (Gray Box - Text Nodes for Print Duplication) -->
+                                <!-- Meta Grid Box -->
                                 <div class="card-box-gray border border-gray-200 rounded-xl p-3.5 bg-slate-50/80 shadow-sm">
                                     <div class="meta-2col-grid grid grid-cols-2 gap-y-2.5 gap-x-4">
                                         <div>
@@ -301,7 +298,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Right Box 2: Freeform Supplier Info Card -->
+                                <!-- Supplier Info Card -->
                                 <div class="card-box border border-gray-200 rounded-xl p-3.5 bg-white shadow-sm">
                                     <div contenteditable="true" class="outline-none text-xs text-gray-700 leading-relaxed space-y-1">
                                         <div class="font-bold text-gray-900">Kepada Yth:</div>
@@ -317,36 +314,35 @@
                     </td>
                 </tr>
 
-                <!-- Row 2: Column Header Row (Repeats automatically beneath document header cards) -->
+                <!-- Row 2: Resizable Column Header Row -->
                 <tr class="col-header-row bg-gray-100 text-gray-800 uppercase font-semibold text-[10px] tracking-wider border-b border-gray-300">
-                    <th class="col-no resizable-th p-1.5 border border-gray-300 text-center w-10">No.</th>
-                    <th class="col-sku resizable-th p-1.5 border border-gray-300 w-28">SKU</th>
-                    <th class="col-barcode resizable-th p-1.5 border border-gray-300 w-36">Barcode</th>
+                    <th class="col-no resizable-th p-1.5 border border-gray-300 text-center">No.</th>
+                    <th class="col-sku resizable-th p-1.5 border border-gray-300">SKU</th>
+                    <th class="col-barcode resizable-th p-1.5 border border-gray-300">Barcode</th>
                     <th class="col-nama resizable-th p-1.5 border border-gray-300">Nama Barang</th>
-                    <th class="col-qty resizable-th p-1.5 border border-gray-300 text-right w-16">Qty</th>
-                    <th class="col-satuan resizable-th p-1.5 border border-gray-300 text-center w-20">Satuan</th>
+                    <th class="col-qty resizable-th p-1.5 border border-gray-300 text-right">Qty</th>
+                    <th class="col-satuan resizable-th p-1.5 border border-gray-300 text-center">Satuan</th>
                     
                     <!-- Internal Only Columns -->
-                    <th class="col-price col-harga resizable-th p-1.5 border border-gray-300 text-right hidden w-32">Harga Satuan</th>
-                    <th class="col-price col-disc1 resizable-th p-1.5 border border-gray-300 text-right hidden w-20">Disc 1 (%)</th>
-                    <th class="col-price col-disc2 resizable-th p-1.5 border border-gray-300 text-right hidden w-20">Disc 2 (%)</th>
-                    <th class="col-price col-discamt resizable-th p-1.5 border border-gray-300 text-right hidden w-28">Disc Amt</th>
-                    <th class="col-price col-jumlah resizable-th p-1.5 border border-gray-300 text-right hidden w-32">Jumlah</th>
+                    <th class="col-price col-harga resizable-th p-1.5 border border-gray-300 text-right hidden-col">Harga Satuan</th>
+                    <th class="col-price col-disc1 resizable-th p-1.5 border border-gray-300 text-right hidden-col">Disc (%)</th>
+                    <th class="col-price col-discamt resizable-th p-1.5 border border-gray-300 text-right hidden-col">Disc Amt</th>
+                    <th class="col-price col-jumlah resizable-th p-1.5 border border-gray-300 text-right hidden-col">Jumlah</th>
                 </tr>
             </thead>
 
-            <!-- Table Body containing all Items -->
+            <!-- Table Body containing Items -->
             <tbody id="items-table-body" class="print-body divide-y divide-gray-200">
                 <!-- Dynamic Rows Rendered Via JS -->
             </tbody>
 
-            <!-- Master Table Footer Body (Guarantees header repetition on signature-only page breaks) -->
+            <!-- Master Table Footer Body -->
             <tbody id="table-footer-body">
                 
                 <!-- Summary Row -->
-                <tr id="summary-tr" class="border-0">
-                    <td id="summary-td" colspan="11" class="p-0 border-0 pt-4">
-                        <div id="summary-section" class="flex justify-end mb-4 hidden">
+                <tr id="summary-tr" class="border-0 hidden">
+                    <td id="summary-td" colspan="10" class="p-0 border-0 pt-4">
+                        <div id="summary-section" class="flex justify-end mb-4">
                             <div class="w-full sm:w-80 text-xs border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
                                 <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200">
                                     <span class="text-gray-600 font-medium">Sub Total:</span>
@@ -380,7 +376,7 @@
 
                 <!-- Notes Row -->
                 <tr id="notes-tr" class="border-0">
-                    <td id="notes-td" colspan="11" class="p-0 border-0 pt-2">
+                    <td id="notes-td" colspan="6" class="p-0 border-0 pt-2">
                         <div class="card-box border border-gray-200 rounded-xl p-4 bg-white mb-4 text-xs shadow-sm">
                             <div class="flex justify-between items-center mb-3">
                                 <p class="font-bold text-gray-900 text-xs">Note / Catatan Syarat & Ketentuan:</p>
@@ -399,7 +395,7 @@
 
                 <!-- Signatures Row -->
                 <tr id="signatures-tr" class="border-0">
-                    <td id="signatures-td" colspan="11" class="p-0 border-0 pt-2">
+                    <td id="signatures-td" colspan="6" class="p-0 border-0 pt-2">
                         <div class="pt-4 border-t border-gray-200 mt-2">
                             <div class="grid grid-cols-2 gap-8 text-center text-xs mb-6">
                                 <div>
@@ -428,24 +424,24 @@
 
     <script>
         const defaultItems = [
-            { sku: "SKU-1001", barcode: "8991001000012", name: "Indomie Goreng Spesial 85g (Karton / 40 Pcs)", qty: 5, unit: "Karton", price: 112000, disc1: 2, disc2: 0 },
-            { sku: "SKU-1002", barcode: "8992761000025", name: "Minyak Goreng Pouch 2 Liter (Karton / 6 Pouch)", qty: 3, unit: "Karton", price: 215000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1003", barcode: "8999999000038", name: "Susu UHT Full Cream 1000ml (Karton / 12 Pcs)", qty: 2, unit: "Karton", price: 210000, disc1: 1.5, disc2: 0 },
-            { sku: "SKU-1004", barcode: "8991389000041", name: "Teh Melati Kemasan Botol 350ml (Dus / 24 Botol)", qty: 2, unit: "Dus", price: 78000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1005", barcode: "8998888000055", name: "Kopi Instan 3in1 Bag 30x20g", qty: 4, unit: "Bag", price: 45000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1006", barcode: "8997777000062", name: "Gula Pasir Kristal Putih 1kg (Karton / 20 Pcs)", qty: 5, unit: "Karton", price: 290000, disc1: 1, disc2: 0 },
-            { sku: "SKU-1007", barcode: "8996666000079", name: "Beras Pandan Wangi Super 5kg", qty: 10, unit: "Karung", price: 78000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1008", barcode: "8995555000086", name: "Sabun Cuci Piring Liquid 780ml (Karton / 12 Pcs)", qty: 3, unit: "Karton", price: 165000, disc1: 2, disc2: 0 },
-            { sku: "SKU-1009", barcode: "8994444000093", name: "Deterjen Bubuk Anti Noda 1.8kg (Karton / 6 Pcs)", qty: 4, unit: "Karton", price: 210000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1010", barcode: "8993333000109", name: "Pembersih Lantai Aroma Citrus 800ml (Karton / 12 Pcs)", qty: 2, unit: "Karton", price: 135000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1011", barcode: "8992222000116", name: "Air Mineral Botol 600ml (Karton / 24 Botol)", qty: 15, unit: "Karton", price: 48000, disc1: 3, disc2: 0 },
-            { sku: "SKU-1012", barcode: "8991111000123", name: "Biskuit Kaleng Assorted 650g (Dus / 6 Kaleng)", qty: 5, unit: "Dus", price: 285000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1013", barcode: "8990000000130", name: "Minyak Zaitun Extra Virgin 500ml", qty: 6, unit: "Botol", price: 95000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1014", barcode: "8991234000147", name: "Saus Sambal Extra Pedas 335ml (Karton / 24 Pcs)", qty: 3, unit: "Karton", price: 180000, disc1: 1, disc2: 0 },
-            { sku: "SKU-1015", barcode: "8992345000154", name: "Kecap Manis Botol 600ml (Karton / 12 Pcs)", qty: 4, unit: "Karton", price: 220000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1016", barcode: "8993456000161", name: "Margarin Serbaguna 200g (Karton / 60 Pcs)", qty: 2, unit: "Karton", price: 340000, disc1: 2, disc2: 0 },
-            { sku: "SKU-1017", barcode: "8994567000178", name: "Tissue Wajah 250 Sheets (Karton / 48 Packs)", qty: 3, unit: "Karton", price: 395000, disc1: 0, disc2: 0 },
-            { sku: "SKU-1018", barcode: "8995678000185", name: "Keripik Kentang Original 68g (Dus / 30 Pcs)", qty: 5, unit: "Dus", price: 280000, disc1: 0, disc2: 0 }
+            { sku: "SKU-1001", barcode: "8991001000012", name: "Indomie Goreng Spesial 85g (Karton / 40 Pcs)", qty: 5, unit: "Karton", price: 112000, disc1: 2 },
+            { sku: "SKU-1002", barcode: "8992761000025", name: "Minyak Goreng Pouch 2 Liter (Karton / 6 Pouch)", qty: 3, unit: "Karton", price: 215000, disc1: 0 },
+            { sku: "SKU-1003", barcode: "8999999000038", name: "Susu UHT Full Cream 1000ml (Karton / 12 Pcs)", qty: 2, unit: "Karton", price: 210000, disc1: 1.5 },
+            { sku: "SKU-1004", barcode: "8991389000041", name: "Teh Melati Kemasan Botol 350ml (Dus / 24 Botol)", qty: 2, unit: "Dus", price: 78000, disc1: 0 },
+            { sku: "SKU-1005", barcode: "8998888000055", name: "Kopi Instan 3in1 Bag 30x20g", qty: 4, unit: "Bag", price: 45000, disc1: 0 },
+            { sku: "SKU-1006", barcode: "8997777000062", name: "Gula Pasir Kristal Putih 1kg (Karton / 20 Pcs)", qty: 5, unit: "Karton", price: 290000, disc1: 1 },
+            { sku: "SKU-1007", barcode: "8996666000079", name: "Beras Pandan Wangi Super 5kg", qty: 10, unit: "Karung", price: 78000, disc1: 0 },
+            { sku: "SKU-1008", barcode: "8995555000086", name: "Sabun Cuci Piring Liquid 780ml (Karton / 12 Pcs)", qty: 3, unit: "Karton", price: 165000, disc1: 2 },
+            { sku: "SKU-1009", barcode: "8994444000093", name: "Deterjen Bubuk Anti Noda 1.8kg (Karton / 6 Pcs)", qty: 4, unit: "Karton", price: 210000, disc1: 0 },
+            { sku: "SKU-1010", barcode: "8993333000109", name: "Pembersih Lantai Aroma Citrus 800ml (Karton / 12 Pcs)", qty: 2, unit: "Karton", price: 135000, disc1: 0 },
+            { sku: "SKU-1011", barcode: "8992222000116", name: "Air Mineral Botol 600ml (Karton / 24 Botol)", qty: 15, unit: "Karton", price: 48000, disc1: 3 },
+            { sku: "SKU-1012", barcode: "8991111000123", name: "Biskuit Kaleng Assorted 650g (Dus / 6 Kaleng)", qty: 5, unit: "Dus", price: 285000, disc1: 0 },
+            { sku: "SKU-1013", barcode: "8990000000130", name: "Minyak Zaitun Extra Virgin 500ml", qty: 6, unit: "Botol", price: 95000, disc1: 0 },
+            { sku: "SKU-1014", barcode: "8991234000147", name: "Saus Sambal Extra Pedas 335ml (Karton / 24 Pcs)", qty: 3, unit: "Karton", price: 180000, disc1: 1 },
+            { sku: "SKU-1015", barcode: "8992345000154", name: "Kecap Manis Botol 600ml (Karton / 12 Pcs)", qty: 4, unit: "Karton", price: 220000, disc1: 0 },
+            { sku: "SKU-1016", barcode: "8993456000161", name: "Margarin Serbaguna 200g (Karton / 60 Pcs)", qty: 2, unit: "Karton", price: 340000, disc1: 2 },
+            { sku: "SKU-1017", barcode: "8994567000178", name: "Tissue Wajah 250 Sheets (Karton / 48 Packs)", qty: 3, unit: "Karton", price: 395000, disc1: 0 },
+            { sku: "SKU-1018", barcode: "8995678000185", name: "Keripik Kentang Original 68g (Dus / 30 Pcs)", qty: 5, unit: "Dus", price: 280000, disc1: 0 }
         ];
 
         const defaultNotes = [
@@ -455,6 +451,10 @@
             "Produk yang dikirim dengan masa expired kurang dari 6 (Enam) bulan, tidak akan diterima oleh toko kami.",
             "PO yang dikirim setelah tanggal kadaluarsa, tidak dapat diterima oleh toko."
         ];
+
+        /* Column widths in percentage for web & print consistency */
+        let supplierWidths = [5, 14, 16, 45, 8, 12];
+        let internalWidths = [4, 10, 12, 28, 5, 6, 11, 7, 7, 10];
 
         let currentItems = JSON.parse(JSON.stringify(defaultItems));
         let currentNotes = [...defaultNotes];
@@ -475,58 +475,114 @@
             return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(num);
         }
 
+        function updateColGroup() {
+            const colgroup = document.getElementById('table-colgroup');
+            if (!colgroup) return;
+            colgroup.innerHTML = '';
+
+            const widths = (activeMode === 'internal') ? internalWidths : supplierWidths;
+            widths.forEach(w => {
+                const col = document.createElement('col');
+                col.style.width = w + '%';
+                colgroup.appendChild(col);
+            });
+
+            const headers = document.querySelectorAll('.col-header-row th:not(.hidden-col)');
+            headers.forEach((th, idx) => {
+                if (widths[idx] !== undefined) {
+                    th.style.width = widths[idx] + '%';
+                }
+            });
+        }
+
         function initColumnResizers() {
             const headerRow = document.querySelector('.col-header-row');
             if (!headerRow) return;
 
-            const headers = headerRow.querySelectorAll('th');
-            headers.forEach((th) => {
+            const table = document.getElementById('po-main-table');
+            const headers = Array.from(headerRow.querySelectorAll('th:not(.hidden-col)'));
+            const currentWidths = (activeMode === 'internal') ? internalWidths : supplierWidths;
+
+            headers.forEach((th, index) => {
                 const existingResizer = th.querySelector('.col-resizer');
                 if (existingResizer) existingResizer.remove();
+
+                if (index === headers.length - 1) return; // Skip last column resizer
 
                 const resizer = document.createElement('div');
                 resizer.className = 'col-resizer no-print';
                 th.appendChild(resizer);
 
-                let startX, startWidth;
+                let startX = 0;
+                let startWidthPct = 0;
+                let nextWidthPct = 0;
+                let tableWidth = 1;
 
-                resizer.addEventListener('mousedown', function (e) {
+                function startDrag(e) {
                     e.preventDefault();
                     e.stopPropagation();
 
-                    startX = e.clientX;
-                    startWidth = th.offsetWidth;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    startX = clientX;
+                    tableWidth = table.offsetWidth || 800;
+
+                    startWidthPct = currentWidths[index];
+                    nextWidthPct = currentWidths[index + 1] || 10;
 
                     resizer.classList.add('resizing');
                     document.body.style.cursor = 'col-resize';
 
-                    function onMouseMove(e) {
-                        const widthDiff = e.clientX - startX;
-                        const newWidth = Math.max(35, startWidth + widthDiff);
-                        th.style.width = newWidth + 'px';
-                        th.style.minWidth = newWidth + 'px';
+                    function onMove(moveEvent) {
+                        const currentX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
+                        const deltaX = currentX - startX;
+                        const deltaPct = (deltaX / tableWidth) * 100;
+
+                        const minPct = 3;
+                        let newCurrentPct = startWidthPct + deltaPct;
+                        let newNextPct = nextWidthPct - deltaPct;
+
+                        if (newCurrentPct < minPct) {
+                            newCurrentPct = minPct;
+                            newNextPct = startWidthPct + nextWidthPct - minPct;
+                        } else if (newNextPct < minPct) {
+                            newNextPct = minPct;
+                            newCurrentPct = startWidthPct + nextWidthPct - minPct;
+                        }
+
+                        currentWidths[index] = Math.round(newCurrentPct * 10) / 10;
+                        if (index + 1 < currentWidths.length) {
+                            currentWidths[index + 1] = Math.round(newNextPct * 10) / 10;
+                        }
+
+                        updateColGroup();
                     }
 
-                    function onMouseUp() {
+                    function onEnd() {
                         resizer.classList.remove('resizing');
                         document.body.style.cursor = '';
-                        window.removeEventListener('mousemove', onMouseMove);
-                        window.removeEventListener('mouseup', onMouseUp);
+                        window.removeEventListener('mousemove', onMove);
+                        window.removeEventListener('mouseup', onEnd);
+                        window.removeEventListener('touchmove', onMove);
+                        window.removeEventListener('touchend', onEnd);
                     }
 
-                    window.addEventListener('mousemove', onMouseMove);
-                    window.addEventListener('mouseup', onMouseUp);
-                });
+                    window.addEventListener('mousemove', onMove);
+                    window.addEventListener('mouseup', onEnd);
+                    window.addEventListener('touchmove', onMove, { passive: false });
+                    window.addEventListener('touchend', onEnd);
+                }
+
+                resizer.addEventListener('mousedown', startDrag);
+                resizer.addEventListener('touchstart', startDrag, { passive: false });
             });
         }
 
         function resetColumnWidths() {
-            const headers = document.querySelectorAll('.col-header-row th');
-            headers.forEach(th => {
-                th.style.width = '';
-                th.style.minWidth = '';
-            });
-            showToast("Ukuran lebar kolom telah diatur ulang.");
+            supplierWidths = [5, 14, 16, 45, 8, 12];
+            internalWidths = [4, 10, 12, 28, 5, 6, 11, 7, 7, 10];
+            updateColGroup();
+            initColumnResizers();
+            showToast("Ukuran lebar kolom telah diatur ulang ke posisi standar.");
         }
 
         function renderTable() {
@@ -539,14 +595,9 @@
                 
                 const qty = parseFloat(item.qty) || 0;
                 const price = parseFloat(item.price) || 0;
-                
                 const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
-                const d2 = Math.min(100, Math.max(0, parseFloat(item.disc2) || 0));
 
-                let discountedPrice = price;
-                discountedPrice *= (1 - d1 / 100);
-                discountedPrice *= (1 - d2 / 100);
-
+                const discountedPrice = price * (1 - d1 / 100);
                 const discAmount = (price - discountedPrice) * qty;
                 const lineTotal = qty * discountedPrice;
 
@@ -568,19 +619,16 @@
                         <input type="text" class="input-clean px-1 text-center text-[11px]" value="${escapeHtml(item.unit)}" onchange="updateItem(${index}, 'unit', this.value)">
                     </td>
                     
-                    <td class="col-price col-harga p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden' : ''}">
+                    <td class="col-price col-harga p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden-col' : ''}">
                         <input type="number" class="input-clean px-1 text-right text-[11px] font-mono font-medium" value="${item.price}" oninput="updateItem(${index}, 'price', this.value)">
                     </td>
-                    <td class="col-price col-disc1 p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden' : ''}">
+                    <td class="col-price col-disc1 p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden-col' : ''}">
                         <input type="number" min="0" max="100" step="any" class="input-clean px-1 text-right text-[11px] font-mono" value="${item.disc1}" oninput="updateItem(${index}, 'disc1', this.value)" placeholder="0">
                     </td>
-                    <td class="col-price col-disc2 p-1 border border-gray-300 text-right ${activeMode === 'supplier' ? 'hidden' : ''}">
-                        <input type="number" min="0" max="100" step="any" class="input-clean px-1 text-right text-[11px] font-mono" value="${item.disc2}" oninput="updateItem(${index}, 'disc2', this.value)" placeholder="0">
-                    </td>
-                    <td class="col-price col-discamt p-1.5 border border-gray-300 text-right font-mono text-[11px] whitespace-nowrap ${activeMode === 'supplier' ? 'hidden' : ''}">
+                    <td class="col-price col-discamt p-1.5 border border-gray-300 text-right font-mono text-[11px] whitespace-nowrap ${activeMode === 'supplier' ? 'hidden-col' : ''}">
                         ${formatNum(discAmount)}
                     </td>
-                    <td class="col-price col-jumlah p-1.5 border border-gray-300 text-right font-semibold font-mono text-[11px] whitespace-nowrap ${activeMode === 'supplier' ? 'hidden' : ''}">
+                    <td class="col-price col-jumlah p-1.5 border border-gray-300 text-right font-semibold font-mono text-[11px] whitespace-nowrap ${activeMode === 'supplier' ? 'hidden-col' : ''}">
                         ${formatNum(lineTotal)}
                     </td>
                 `;
@@ -592,7 +640,7 @@
 
         function updateItem(index, field, value) {
             currentItems[index][field] = value;
-            if (['qty', 'price', 'disc1', 'disc2'].includes(field)) {
+            if (['qty', 'price', 'disc1'].includes(field)) {
                 updateRowCalculations(index);
             }
         }
@@ -606,19 +654,14 @@
 
             const qty = parseFloat(item.qty) || 0;
             const price = parseFloat(item.price) || 0;
-
             const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
-            const d2 = Math.min(100, Math.max(0, parseFloat(item.disc2) || 0));
 
-            let discountedPrice = price;
-            discountedPrice *= (1 - d1 / 100);
-            discountedPrice *= (1 - d2 / 100);
-
+            const discountedPrice = price * (1 - d1 / 100);
             const discAmount = (price - discountedPrice) * qty;
             const lineTotal = qty * discountedPrice;
 
-            const discCell = tr.children[9];
-            const totalCell = tr.children[10];
+            const discCell = tr.children[8];
+            const totalCell = tr.children[9];
 
             if (discCell) discCell.innerText = formatNum(discAmount);
             if (totalCell) totalCell.innerText = formatNum(lineTotal);
@@ -632,14 +675,9 @@
             currentItems.forEach(item => {
                 const qty = parseFloat(item.qty) || 0;
                 const price = parseFloat(item.price) || 0;
-                
                 const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
-                const d2 = Math.min(100, Math.max(0, parseFloat(item.disc2) || 0));
 
-                let discountedPrice = price;
-                discountedPrice *= (1 - d1 / 100);
-                discountedPrice *= (1 - d2 / 100);
-
+                const discountedPrice = price * (1 - d1 / 100);
                 subtotal += (qty * discountedPrice);
             });
 
@@ -667,8 +705,7 @@
                 qty: 1,
                 unit: 'Pcs',
                 price: 0,
-                disc1: 0,
-                disc2: 0
+                disc1: 0
             });
             renderTable();
         }
@@ -723,33 +760,37 @@
             const poDoc = document.getElementById('po-document');
             const priceCols = document.querySelectorAll('.col-price');
             const summaryTr = document.getElementById('summary-tr');
-            const summarySec = document.getElementById('summary-section');
             const btnSupplier = document.getElementById('btn-supplier');
             const btnInternal = document.getElementById('btn-internal');
 
-            const totalCols = (mode === 'internal') ? 11 : 6;
+            const totalCols = (mode === 'internal') ? 10 : 6;
             ['header-card-td', 'summary-td', 'notes-td', 'signatures-td'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.colSpan = totalCols;
+                if (el) {
+                    el.colSpan = totalCols;
+                    el.setAttribute('colspan', totalCols);
+                }
             });
 
             if (mode === 'internal') {
                 poDoc?.classList.remove('supplier-mode');
-                priceCols.forEach(el => el.classList.remove('hidden'));
+                priceCols.forEach(el => el.classList.remove('hidden-col'));
                 summaryTr?.classList.remove('hidden');
-                summarySec?.classList.remove('hidden');
                 
                 if (btnInternal) btnInternal.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent bg-white text-blue-700 shadow-sm font-semibold";
                 if (btnSupplier) btnSupplier.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent text-gray-600 hover:text-gray-900";
             } else {
                 poDoc?.classList.add('supplier-mode');
-                priceCols.forEach(el => el.classList.add('hidden'));
+                priceCols.forEach(el => el.classList.add('hidden-col'));
                 summaryTr?.classList.add('hidden');
-                summarySec?.classList.add('hidden');
 
                 if (btnSupplier) btnSupplier.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent bg-white text-blue-700 shadow-sm font-semibold";
                 if (btnInternal) btnInternal.className = "px-3.5 py-1.5 text-xs font-medium rounded-md transition border border-transparent text-gray-600 hover:text-gray-900";
             }
+
+            updateColGroup();
+            renderTable();
+            initColumnResizers();
         }
 
         function showToast(message) {
@@ -769,9 +810,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             renderNotes();
-            renderTable();
             switchView('supplier');
-            initColumnResizers();
         });
     </script>
 </body>

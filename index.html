@@ -4,8 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase Order Interaktif - PT Nusantara Retail Jaya</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ExcelJS & FileSaver for 1:1 styled Excel exports (.xlsx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         body {
@@ -224,11 +231,20 @@
             </button>
             <button onclick="resetColumnWidths()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition border border-slate-300" title="Atur Ulang Lebar Kolom">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Reset Lebar Kolom
+                Reset Lebar
             </button>
-            <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-2 shadow-sm transition">
+
+            <!-- Excel Download Button with Preview Modal Trigger -->
+            <button onclick="openExcelPreview()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Download Excel
+            </button>
+
+            <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg flex items-center gap-2 shadow-sm transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 000-4h-6a2 2 0 000 4zm8-12V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4h10z"></path></svg>
-                Cetak / Simpan PDF
+                Cetak / PDF
             </button>
         </div>
     </div>
@@ -251,8 +267,8 @@
                     <td id="header-card-td" colspan="6" class="p-0 border-0 align-top pb-3">
                         <div class="border-b-2 border-gray-900 pb-2 mb-3">
                             <div>
-                                <div contenteditable="true" id="doc-title" class="outline-none text-2xl font-bold tracking-tight text-gray-900 uppercase">PURCHASE ORDER</div>
-                                <div contenteditable="true" id="company-name" class="outline-none text-sm font-semibold text-gray-700 mt-0.5">PT NUSANTARA RETAIL JAYA</div>
+                                <div contenteditable="true" id="doc-title" class="outline-none text-2xl font-extrabold tracking-tight text-gray-900 uppercase">PURCHASE ORDER</div>
+                                <div contenteditable="true" id="company-name" class="outline-none text-sm font-bold text-gray-700 mt-0.5">PT NUSANTARA RETAIL JAYA</div>
                             </div>
                         </div>
 
@@ -260,8 +276,8 @@
                         <div class="meta-address-grid grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-stretch">
                             
                             <!-- Left Column Card: Freeform Ship To Address -->
-                            <div class="card-box border border-gray-200 rounded-xl p-4 bg-white flex flex-col justify-between shadow-sm">
-                                <div contenteditable="true" class="outline-none text-xs text-gray-700 leading-relaxed space-y-1">
+                            <div class="card-box border border-gray-300 rounded-xl p-4 bg-white flex flex-col justify-between shadow-xs">
+                                <div contenteditable="true" id="ship-to-info" class="outline-none text-xs text-gray-700 leading-relaxed space-y-1">
                                     <div class="font-bold text-gray-900">Dengan Hormat,</div>
                                     <div class="text-gray-500 text-[11px] mb-2">Bersama ini kami sampaikan Order Pembelian untuk dikirim ke:</div>
                                     <hr class="border-gray-200 my-2">
@@ -277,35 +293,35 @@
                             <div class="space-y-3 flex flex-col justify-between">
                                 
                                 <!-- Meta Grid Box -->
-                                <div class="card-box-gray border border-gray-200 rounded-xl p-3.5 bg-slate-50/80 shadow-sm">
+                                <div class="card-box-gray border border-gray-300 rounded-xl p-3.5 bg-slate-50 shadow-xs">
                                     <div class="meta-2col-grid grid grid-cols-2 gap-y-2.5 gap-x-4">
                                         <div>
-                                            <span class="text-gray-500 text-[11px] block font-medium">Nomor P.O:</span>
+                                            <span class="text-gray-500 text-[10px] block font-medium">Nomor P.O:</span>
                                             <div contenteditable="true" id="po-number" class="outline-none font-bold text-gray-900 text-sm">NRJ-PO-20260810-001</div>
                                         </div>
                                         <div>
-                                            <span class="text-gray-500 text-[11px] block font-medium">Tanggal P.O:</span>
+                                            <span class="text-gray-500 text-[10px] block font-medium">Tanggal P.O:</span>
                                             <div contenteditable="true" id="po-date" class="outline-none font-semibold text-gray-800 text-xs">10 Aug 2026</div>
                                         </div>
                                         <div>
-                                            <span class="text-gray-500 text-[11px] block font-medium">Tanggal Kirim:</span>
+                                            <span class="text-gray-500 text-[10px] block font-medium">Tanggal Kirim:</span>
                                             <div contenteditable="true" id="ship-date" class="outline-none font-semibold text-gray-800 text-xs">12 Aug 2026</div>
                                         </div>
                                         <div>
-                                            <span class="text-gray-500 text-[11px] block font-medium">Tanggal Kadaluarsa:</span>
+                                            <span class="text-gray-500 text-[10px] block font-medium">Tanggal Kadaluarsa:</span>
                                             <div contenteditable="true" id="expiry-date" class="outline-none font-bold text-red-600 text-xs">25 Aug 2026</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Supplier Info Card -->
-                                <div class="card-box border border-gray-200 rounded-xl p-3.5 bg-white shadow-sm">
-                                    <div contenteditable="true" class="outline-none text-xs text-gray-700 leading-relaxed space-y-1">
+                                <div class="card-box border border-gray-300 rounded-xl p-3.5 bg-white shadow-xs">
+                                    <div contenteditable="true" id="supplier-info" class="outline-none text-xs text-gray-700 leading-relaxed space-y-1">
                                         <div class="font-bold text-gray-900">Kepada Yth:</div>
                                         <div class="font-bold text-gray-900">PT. Megah Distribusi Nusantara</div>
-                                        <div class="text-gray-600">Kawasan Industri Pulogadung, Jl. Rawa Gelam II No. 5, Jakarta Timur</div>
-                                        <div class="text-gray-600">Phone: 021-4608888 / 081298765432</div>
-                                        <div class="text-gray-600">Fax: 021-4608889</div>
+                                        <div class="text-gray-600 text-[11px]">Kawasan Industri Pulogadung, Jl. Rawa Gelam II No. 5, Jakarta Timur</div>
+                                        <div class="text-gray-600 text-[11px]">Phone: 021-4608888 / 081298765432</div>
+                                        <div class="text-gray-600 text-[11px]">Fax: 021-4608889</div>
                                     </div>
                                 </div>
 
@@ -315,19 +331,19 @@
                 </tr>
 
                 <!-- Row 2: Resizable Column Header Row -->
-                <tr class="col-header-row bg-gray-100 text-gray-800 uppercase font-semibold text-[10px] tracking-wider border-b border-gray-300">
-                    <th class="col-no resizable-th p-1.5 border border-gray-300 text-center">No.</th>
-                    <th class="col-sku resizable-th p-1.5 border border-gray-300">SKU</th>
-                    <th class="col-barcode resizable-th p-1.5 border border-gray-300">Barcode</th>
-                    <th class="col-nama resizable-th p-1.5 border border-gray-300">Nama Barang</th>
-                    <th class="col-qty resizable-th p-1.5 border border-gray-300 text-right">Qty</th>
-                    <th class="col-satuan resizable-th p-1.5 border border-gray-300 text-center">Satuan</th>
+                <tr class="col-header-row bg-gray-100 text-gray-800 uppercase font-bold text-[10px] tracking-wider border-b border-gray-300">
+                    <th class="col-no resizable-th p-2 border border-gray-300 text-center">NO.</th>
+                    <th class="col-sku resizable-th p-2 border border-gray-300">SKU</th>
+                    <th class="col-barcode resizable-th p-2 border border-gray-300">BARCODE</th>
+                    <th class="col-nama resizable-th p-2 border border-gray-300">NAMA BARANG</th>
+                    <th class="col-qty resizable-th p-2 border border-gray-300 text-right">QTY</th>
+                    <th class="col-satuan resizable-th p-2 border border-gray-300 text-center">SATUAN</th>
                     
                     <!-- Internal Only Columns -->
-                    <th class="col-price col-harga resizable-th p-1.5 border border-gray-300 text-right hidden-col">Harga Satuan</th>
-                    <th class="col-price col-disc1 resizable-th p-1.5 border border-gray-300 text-right hidden-col">Disc (%)</th>
-                    <th class="col-price col-discamt resizable-th p-1.5 border border-gray-300 text-right hidden-col">Disc Amt</th>
-                    <th class="col-price col-jumlah resizable-th p-1.5 border border-gray-300 text-right hidden-col">Jumlah</th>
+                    <th class="col-price col-harga resizable-th p-2 border border-gray-300 text-right hidden-col">HARGA SATUAN</th>
+                    <th class="col-price col-disc1 resizable-th p-2 border border-gray-300 text-right hidden-col">DISC (%)</th>
+                    <th class="col-price col-discamt resizable-th p-2 border border-gray-300 text-right hidden-col">DISC AMT</th>
+                    <th class="col-price col-jumlah resizable-th p-2 border border-gray-300 text-right hidden-col">JUMLAH</th>
                 </tr>
             </thead>
 
@@ -359,7 +375,7 @@
                                 <div class="flex justify-between items-center px-3 py-2 border-b border-gray-200">
                                     <div class="flex items-center gap-1">
                                         <span class="text-gray-600 font-medium">PPn (</span>
-                                        <input type="number" id="ppn-rate" oninput="calculateTotals()" class="input-clean w-10 text-center font-semibold text-gray-900" value="0" min="0" max="100">
+                                        <input type="number" id="ppn-rate" oninput="calculateTotals()" class="input-clean w-10 text-center font-semibold text-gray-900" value="11" min="0" max="100">
                                         <span class="text-gray-600 font-medium">%):</span>
                                     </div>
                                     <span id="ppn-val" class="font-semibold text-gray-900">0</span>
@@ -420,6 +436,78 @@
 
         </table>
 
+    </div>
+
+    <!-- Excel Live Preview Modal Overlay -->
+    <div id="excel-preview-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-6 opacity-0 pointer-events-none transition-all duration-200 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                            Preview Export Excel (.xlsx)
+                            <span id="excel-preview-mode-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                                Versi Supplier
+                            </span>
+                        </h3>
+                        <p class="text-xs text-slate-400">Simulasi visual lengkap hasil lembar kerja Excel sebelum diunduh</p>
+                    </div>
+                </div>
+
+                <button onclick="closeExcelPreview()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Excel Simulated Window Header -->
+            <div class="bg-emerald-800 px-4 py-2 text-white text-xs flex flex-wrap items-center justify-between gap-2 border-b border-emerald-900 font-sans">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold tracking-wide flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-emerald-300" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+                        Nama File:
+                    </span>
+                    <span id="excel-preview-filename" class="font-mono text-emerald-100 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-700/50">Purchase_Order.xlsx</span>
+                </div>
+                <div class="text-[11px] text-emerald-200">
+                    Engine Spreadsheet: <span class="font-semibold text-white">ExcelJS Engine (Auto Fit A4 Presisi)</span>
+                </div>
+            </div>
+
+            <!-- Modal Body: Interactive Excel Layout Visualizer -->
+            <div class="p-4 bg-slate-100 overflow-auto flex-1 max-h-[60vh] font-sans">
+                <div id="excel-grid-container" class="rounded overflow-hidden">
+                    <!-- Dynamic Live Visual Preview Rendered via JS -->
+                </div>
+            </div>
+
+            <!-- Modal Footer Controls -->
+            <div class="px-6 py-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="text-xs text-slate-500 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Terbuka rapi 1 lembar A4 portrait di Excel (fit width 100% tanpa terpotong).</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="closeExcelPreview()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+                        Batal
+                    </button>
+                    <button onclick="executeExcelDownload()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-2 shadow-md hover:shadow-lg transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download File Excel (.xlsx)
+                    </button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <script>
@@ -808,6 +896,644 @@
             }, 3000);
         }
 
+        function openExcelPreview() {
+            const modal = document.getElementById('excel-preview-modal');
+            const badge = document.getElementById('excel-preview-mode-badge');
+            const fileNameEl = document.getElementById('excel-preview-filename');
+
+            const poNum = (document.getElementById('po-number')?.innerText || 'PO-001').trim();
+            const cleanPoNum = poNum.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `${cleanPoNum || 'Purchase_Order'}_${activeMode.toUpperCase()}.xlsx`;
+
+            if (badge) {
+                badge.innerText = (activeMode === 'internal') ? "Versi Internal (Lengkap)" : "Versi Supplier (Tanpa Harga)";
+                badge.className = (activeMode === 'internal') 
+                    ? "px-2 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30"
+                    : "px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30";
+            }
+
+            if (fileNameEl) {
+                fileNameEl.innerText = fileName;
+            }
+
+            renderExcelGridPreview();
+
+            if (modal) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function closeExcelPreview() {
+            const modal = document.getElementById('excel-preview-modal');
+            if (modal) {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        function renderExcelGridPreview() {
+            const container = document.getElementById('excel-grid-container');
+            if (!container) return;
+
+            const isInternal = (activeMode === 'internal');
+            const poNum = (document.getElementById('po-number')?.innerText || 'PO-001').trim();
+            const poDate = (document.getElementById('po-date')?.innerText || '').trim();
+            const shipDate = (document.getElementById('ship-date')?.innerText || '').trim();
+            const expiryDate = (document.getElementById('expiry-date')?.innerText || '').trim();
+            const docTitle = (document.getElementById('doc-title')?.innerText || 'PURCHASE ORDER').trim();
+            const compName = (document.getElementById('company-name')?.innerText || 'PT NUSANTARA RETAIL JAYA').trim();
+
+            const shipToText = (document.getElementById('ship-to-info')?.innerText || '').trim();
+            const supplierText = (document.getElementById('supplier-info')?.innerText || '').trim();
+
+            const shipLines = shipToText.split('\n').map(l => l.trim()).filter(Boolean);
+            const suppLines = supplierText.split('\n').map(l => l.trim()).filter(Boolean);
+
+            let html = `
+            <div class="bg-white p-6 font-sans text-xs border border-slate-300 shadow-sm max-w-full overflow-x-auto">
+                <!-- Header Title & Company matching vf.PNG -->
+                <div class="border-b-2 border-slate-900 pb-2 mb-4">
+                    <h1 class="text-xl font-extrabold text-slate-900 tracking-tight uppercase">${escapeHtml(docTitle)}</h1>
+                    <p class="text-xs font-bold text-slate-700 mt-0.5">${escapeHtml(compName)}</p>
+                </div>
+
+                <!-- 2 Column Card Layout matching vf.PNG -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <!-- Left Card: Alamat Kirim -->
+                    <div class="border border-slate-300 rounded-xl p-4 bg-white shadow-xs leading-relaxed space-y-1">
+                        <div class="font-bold text-slate-900">${escapeHtml(shipLines[0] || 'Dengan Hormat,')}</div>
+                        <div class="text-slate-500 text-[11px] mb-2">${escapeHtml(shipLines[1] || 'Bersama ini kami sampaikan Order Pembelian untuk dikirim ke:')}</div>
+                        <hr class="border-slate-200 my-2">
+                        <div class="font-bold text-slate-900">${escapeHtml(shipLines[2] || 'Alamat Kirim:')}</div>
+                        <div class="font-bold text-slate-900">${escapeHtml(shipLines[3] || 'Grand Mart Superstore - BSD')}</div>
+                        <div class="text-slate-600">${escapeHtml(shipLines[4] || 'Gudang Utama & Receiving Bay BSD')}</div>
+                        <div class="text-slate-600">${escapeHtml(shipLines[5] || 'Jl. BSD Boulevard Utara No. 88, Lengkong Karya, Serpong')}</div>
+                        <div class="text-slate-600">${escapeHtml(shipLines[6] || 'Tangerang Selatan, Banten, IDN')}</div>
+                    </div>
+
+                    <!-- Right Stack: Metadata + Supplier -->
+                    <div class="space-y-3 flex flex-col justify-between">
+                        <!-- Metadata Card -->
+                        <div class="border border-slate-300 rounded-xl p-3.5 bg-slate-50 shadow-xs">
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block font-medium">Nomor P.O:</span>
+                                    <div class="font-bold text-slate-900 text-sm">${escapeHtml(poNum)}</div>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block font-medium">Tanggal P.O:</span>
+                                    <div class="font-semibold text-slate-800">${escapeHtml(poDate)}</div>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block font-medium">Tanggal Kirim:</span>
+                                    <div class="font-semibold text-slate-800">${escapeHtml(shipDate)}</div>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block font-medium">Tanggal Kadaluarsa:</span>
+                                    <div class="font-bold text-red-600">${escapeHtml(expiryDate)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kepada Yth Card -->
+                        <div class="border border-slate-300 rounded-xl p-3.5 bg-white shadow-xs leading-relaxed space-y-1">
+                            <div class="font-bold text-slate-900">${escapeHtml(suppLines[0] || 'Kepada Yth:')}</div>
+                            <div class="font-bold text-slate-900">${escapeHtml(suppLines[1] || 'PT. Megah Distribusi Nusantara')}</div>
+                            <div class="text-slate-600 text-[11px]">${escapeHtml(suppLines[2] || 'Kawasan Industri Pulogadung, Jl. Rawa Gelam II No. 5, Jakarta Timur')}</div>
+                            <div class="text-slate-600 text-[11px]">${escapeHtml(suppLines[3] || 'Phone: 021-4608888 / 081298765432')}</div>
+                            <div class="text-slate-600 text-[11px]">${escapeHtml(suppLines[4] || 'Fax: 021-4608889')}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table View Matching Image Header & Styling -->
+                <table class="w-full text-left border-collapse border border-slate-300 font-sans text-xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-800 uppercase font-bold text-[10px] tracking-wider border-b border-slate-300">
+                            <th class="p-2 border border-slate-300 text-center w-10">NO.</th>
+                            <th class="p-2 border border-slate-300">SKU</th>
+                            <th class="p-2 border border-slate-300">BARCODE</th>
+                            <th class="p-2 border border-slate-300">NAMA BARANG</th>
+                            <th class="p-2 border border-slate-300 text-right">QTY</th>
+                            <th class="p-2 border border-slate-300 text-center">SATUAN</th>
+                            ${isInternal ? `
+                                <th class="p-2 border border-slate-300 text-right">HARGA SATUAN</th>
+                                <th class="p-2 border border-slate-300 text-right">DISC (%)</th>
+                                <th class="p-2 border border-slate-300 text-right">DISC AMT</th>
+                                <th class="p-2 border border-slate-300 text-right">JUMLAH</th>
+                            ` : ''}
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+            `;
+
+            currentItems.forEach((item, idx) => {
+                const qty = parseFloat(item.qty) || 0;
+                const price = parseFloat(item.price) || 0;
+                const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
+
+                const discountedPrice = price * (1 - d1 / 100);
+                const discAmount = (price - discountedPrice) * qty;
+                const lineTotal = qty * discountedPrice;
+
+                html += `
+                    <tr class="hover:bg-slate-50 text-[11px]">
+                        <td class="p-2 border border-slate-300 text-center font-medium">${idx + 1}</td>
+                        <td class="p-2 border border-slate-300 font-mono">${escapeHtml(item.sku)}</td>
+                        <td class="p-2 border border-slate-300 font-mono">${escapeHtml(item.barcode)}</td>
+                        <td class="p-2 border border-slate-300 font-medium">${escapeHtml(item.name)}</td>
+                        <td class="p-2 border border-slate-300 text-right font-bold">${qty}</td>
+                        <td class="p-2 border border-slate-300 text-center">${escapeHtml(item.unit)}</td>
+                        ${isInternal ? `
+                            <td class="p-2 border border-slate-300 text-right font-mono">${formatNum(price)}</td>
+                            <td class="p-2 border border-slate-300 text-right font-mono">${d1}%</td>
+                            <td class="p-2 border border-slate-300 text-right font-mono">${formatNum(discAmount)}</td>
+                            <td class="p-2 border border-slate-300 text-right font-bold font-mono">${formatNum(lineTotal)}</td>
+                        ` : ''}
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        async function executeExcelDownload() {
+            if (typeof ExcelJS === 'undefined') {
+                showToast("Library ExcelJS sedang dimuat, silakan coba lagi...");
+                return;
+            }
+
+            const isInternal = (activeMode === 'internal');
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Purchase Order', {
+                views: [{ showGridLines: true }]
+            });
+
+            // CRITICAL FIX: Explicit Page Setup for A4 Portrait Print Fit in Excel
+            worksheet.pageSetup = {
+                paperSize: 9, // A4 Paper Size
+                orientation: 'portrait',
+                fitToPage: true,
+                fitToWidth: 1,   // Force fit ALL columns onto 1 page width (No cut-off!)
+                fitToHeight: 0,  // Auto page height
+                margins: {
+                    left: 0.3,
+                    right: 0.3,
+                    top: 0.4,
+                    bottom: 0.4,
+                    header: 0.2,
+                    footer: 0.2
+                }
+            };
+
+            // Extract dynamic text values from UI
+            const docTitle = (document.getElementById('doc-title')?.innerText || 'PURCHASE ORDER').trim();
+            const compName = (document.getElementById('company-name')?.innerText || 'PT NUSANTARA RETAIL JAYA').trim();
+            const poNum = (document.getElementById('po-number')?.innerText || 'PO-001').trim();
+            const poDate = (document.getElementById('po-date')?.innerText || '').trim();
+            const shipDate = (document.getElementById('ship-date')?.innerText || '').trim();
+            const expiryDate = (document.getElementById('expiry-date')?.innerText || '').trim();
+
+            const shipToText = (document.getElementById('ship-to-info')?.innerText || '').trim();
+            const supplierText = (document.getElementById('supplier-info')?.innerText || '').trim();
+
+            const signTitle1 = (document.getElementById('sign-title-1')?.innerText || 'Mengetahui,').trim();
+            const signName1 = (document.getElementById('sign-name-1')?.innerText || '( Tanda Tangan & Cap )').trim();
+            const signTitle2 = (document.getElementById('sign-title-2')?.innerText || 'Hormat Kami,').trim();
+            const signName2 = (document.getElementById('sign-name-2')?.innerText || '( Tim Purchasing / Admin )').trim();
+            const footerNote = (document.getElementById('footer-note')?.innerText || '').trim();
+
+            // Balanced Column Widths for Excel Engine (Fits perfectly inside A4)
+            if (isInternal) {
+                worksheet.columns = [
+                    { key: 'no', width: 5 },
+                    { key: 'sku', width: 13 },
+                    { key: 'barcode', width: 15 },
+                    { key: 'name', width: 32 },
+                    { key: 'qty', width: 7 },
+                    { key: 'unit', width: 9 },
+                    { key: 'price', width: 13 },
+                    { key: 'disc1', width: 8 },
+                    { key: 'discamt', width: 12 },
+                    { key: 'total', width: 14 }
+                ];
+            } else {
+                worksheet.columns = [
+                    { key: 'no', width: 6 },
+                    { key: 'sku', width: 15 },
+                    { key: 'barcode', width: 18 },
+                    { key: 'name', width: 42 },
+                    { key: 'qty', width: 9 },
+                    { key: 'unit', width: 12 }
+                ];
+            }
+
+            const totalCols = worksheet.columns.length;
+
+            const thinBorder = {
+                top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+            };
+
+            // Outer Block Border Helper function for ExcelJS merged blocks
+            function applyBlockStyle(startRow, startCol, endRow, endCol, options = {}) {
+                const borderStyle = options.border || { style: 'thin', color: { argb: 'FFCBD5E1' } };
+                for (let r = startRow; r <= endRow; r++) {
+                    for (let c = startCol; c <= endCol; c++) {
+                        const cell = worksheet.getCell(r, c);
+                        if (options.fill) {
+                            cell.fill = options.fill;
+                        }
+                        const border = {};
+                        if (r === startRow) border.top = borderStyle;
+                        if (r === endRow) border.bottom = borderStyle;
+                        if (c === startCol) border.left = borderStyle;
+                        if (c === endCol) border.right = borderStyle;
+                        cell.border = border;
+                    }
+                }
+            }
+
+            // 1. Document Title Row 1
+            worksheet.getRow(1).height = 26;
+            worksheet.mergeCells(1, 1, 1, totalCols);
+            const cell1 = worksheet.getCell('A1');
+            cell1.value = docTitle.toUpperCase();
+            cell1.font = { name: 'Inter', size: 16, bold: true, color: { argb: 'FF0F172A' } };
+            cell1.alignment = { vertical: 'middle', horizontal: 'left' };
+
+            // 2. Company Name Row 2
+            worksheet.getRow(2).height = 18;
+            worksheet.mergeCells(2, 1, 2, totalCols);
+            const cell2 = worksheet.getCell('A2');
+            cell2.value = compName;
+            cell2.font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FF334155' } };
+            cell2.alignment = { vertical: 'middle', horizontal: 'left' };
+
+            // Row 3: Horizontal line separator
+            worksheet.getRow(3).height = 4;
+            for (let c = 1; c <= totalCols; c++) {
+                worksheet.getCell(3, c).border = { bottom: { style: 'medium', color: { argb: 'FF0F172A' } } };
+            }
+
+            worksheet.getRow(4).height = 8; // Blank gap
+
+            // 3. Card Sections Layout (Rows 5 to 12)
+            // Precise Grid Mapping based on Mode
+            const leftEndCol = isInternal ? 4 : 3; // Cols 1..3 for Supplier, Cols 1..4 for Internal
+            const rightStartCol = leftEndCol + 1;
+            const rightEndCol = totalCols;
+
+            const shipLines = shipToText.split('\n').map(l => l.trim()).filter(Boolean);
+            const suppLines = supplierText.split('\n').map(l => l.trim()).filter(Boolean);
+
+            // Left Card Lines (Rows 5..12)
+            worksheet.mergeCells(5, 1, 5, leftEndCol);
+            worksheet.getCell(5, 1).value = shipLines[0] || "Dengan Hormat,";
+            worksheet.getCell(5, 1).font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+
+            worksheet.mergeCells(6, 1, 6, leftEndCol);
+            worksheet.getCell(6, 1).value = shipLines[1] || "Bersama ini kami sampaikan Order Pembelian untuk dikirim ke:";
+            worksheet.getCell(6, 1).font = { name: 'Inter', size: 9, color: { argb: 'FF64748B' } };
+
+            worksheet.mergeCells(7, 1, 7, leftEndCol);
+            worksheet.getCell(7, 1).border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+
+            worksheet.mergeCells(8, 1, 8, leftEndCol);
+            worksheet.getCell(8, 1).value = shipLines[2] || "Alamat Kirim:";
+            worksheet.getCell(8, 1).font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+
+            worksheet.mergeCells(9, 1, 9, leftEndCol);
+            worksheet.getCell(9, 1).value = shipLines[3] || "Grand Mart Superstore - BSD";
+            worksheet.getCell(9, 1).font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+
+            worksheet.mergeCells(10, 1, 10, leftEndCol);
+            worksheet.getCell(10, 1).value = shipLines[4] || "Gudang Utama & Receiving Bay BSD";
+            worksheet.getCell(10, 1).font = { name: 'Inter', size: 9, color: { argb: 'FF475569' } };
+
+            worksheet.mergeCells(11, 1, 11, leftEndCol);
+            worksheet.getCell(11, 1).value = shipLines[5] || "Jl. BSD Boulevard Utara No. 88, Lengkong Karya, Serpong";
+            worksheet.getCell(11, 1).font = { name: 'Inter', size: 9, color: { argb: 'FF475569' } };
+
+            worksheet.mergeCells(12, 1, 12, leftEndCol);
+            worksheet.getCell(12, 1).value = shipLines[6] || "Tangerang Selatan, Banten, IDN";
+            worksheet.getCell(12, 1).font = { name: 'Inter', size: 9, color: { argb: 'FF475569' } };
+
+            // Apply Outer Border & Fill to Left Card Box
+            applyBlockStyle(5, 1, 12, leftEndCol, { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } } });
+
+
+            // Right Metadata Card (Rows 5 to 8)
+            // In Supplier Mode: rightStartCol is 4 (Col D - Nama Barang), rightEndCol is 6 (Col F - Satuan).
+            // Sub-left col for Metadata: Col 4 (Width 42). Sub-right col: Cols 5..6 (Width 21).
+            const mLeftStart = rightStartCol;
+            const mLeftEnd = isInternal ? rightStartCol + 2 : rightStartCol; 
+            const mRightStart = mLeftEnd + 1;
+            const mRightEnd = rightEndCol; 
+
+            // Row 5: Metadata Headers
+            worksheet.mergeCells(5, mLeftStart, 5, mLeftEnd);
+            worksheet.getCell(5, mLeftStart).value = "Nomor P.O:";
+            worksheet.getCell(5, mLeftStart).font = { name: 'Inter', size: 8.5, color: { argb: 'FF64748B' } };
+
+            worksheet.mergeCells(5, mRightStart, 5, mRightEnd);
+            worksheet.getCell(5, mRightStart).value = "Tanggal P.O:";
+            worksheet.getCell(5, mRightStart).font = { name: 'Inter', size: 8.5, color: { argb: 'FF64748B' } };
+
+            // Row 6: Metadata Values
+            worksheet.mergeCells(6, mLeftStart, 6, mLeftEnd);
+            worksheet.getCell(6, mLeftStart).value = poNum;
+            worksheet.getCell(6, mLeftStart).font = { name: 'Inter', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+
+            worksheet.mergeCells(6, mRightStart, 6, mRightEnd);
+            worksheet.getCell(6, mRightStart).value = poDate;
+            worksheet.getCell(6, mRightStart).font = { name: 'Inter', size: 9.5, bold: true, color: { argb: 'FF334155' } };
+
+            // Row 7: Dates Headers
+            worksheet.mergeCells(7, mLeftStart, 7, mLeftEnd);
+            worksheet.getCell(7, mLeftStart).value = "Tanggal Kirim:";
+            worksheet.getCell(7, mLeftStart).font = { name: 'Inter', size: 8.5, color: { argb: 'FF64748B' } };
+
+            worksheet.mergeCells(7, mRightStart, 7, mRightEnd);
+            worksheet.getCell(7, mRightStart).value = "Tanggal Kadaluarsa:";
+            worksheet.getCell(7, mRightStart).font = { name: 'Inter', size: 8.5, color: { argb: 'FF64748B' } };
+
+            // Row 8: Dates Values
+            worksheet.mergeCells(8, mLeftStart, 8, mLeftEnd);
+            worksheet.getCell(8, mLeftStart).value = shipDate;
+            worksheet.getCell(8, mLeftStart).font = { name: 'Inter', size: 9.5, bold: true, color: { argb: 'FF334155' } };
+
+            worksheet.mergeCells(8, mRightStart, 8, mRightEnd);
+            worksheet.getCell(8, mRightStart).value = expiryDate;
+            worksheet.getCell(8, mRightStart).font = { name: 'Inter', size: 9.5, bold: true, color: { argb: 'FFDC2626' } }; // Red Expiry Date
+
+            // Apply Outer Border & Light Gray Fill (#F8FAFC) to Metadata Box
+            applyBlockStyle(5, rightStartCol, 8, rightEndCol, { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } } });
+
+
+            // Right Supplier Card (Rows 9 to 12)
+            worksheet.mergeCells(9, rightStartCol, 9, rightEndCol);
+            worksheet.getCell(9, rightStartCol).value = suppLines[0] || "Kepada Yth:";
+            worksheet.getCell(9, rightStartCol).font = { name: 'Inter', size: 9.5, bold: true, color: { argb: 'FF0F172A' } };
+
+            worksheet.mergeCells(10, rightStartCol, 10, rightEndCol);
+            worksheet.getCell(10, rightStartCol).value = suppLines[1] || "PT. Megah Distribusi Nusantara";
+            worksheet.getCell(10, rightStartCol).font = { name: 'Inter', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+
+            worksheet.mergeCells(11, rightStartCol, 11, rightEndCol);
+            worksheet.getCell(11, rightStartCol).value = suppLines[2] || "Kawasan Industri Pulogadung, Jl. Rawa Gelam II No. 5, Jakarta Timur";
+            worksheet.getCell(11, rightStartCol).font = { name: 'Inter', size: 8.5, color: { argb: 'FF475569' } };
+
+            worksheet.mergeCells(12, rightStartCol, 12, rightEndCol);
+            worksheet.getCell(12, rightStartCol).value = suppLines.slice(3).join(" | ") || "Phone: 021-4608888 / 081298765432 | Fax: 021-4608889";
+            worksheet.getCell(12, rightStartCol).font = { name: 'Inter', size: 8.5, color: { argb: 'FF475569' } };
+
+            // Apply Outer Border to Supplier Card
+            applyBlockStyle(9, rightStartCol, 12, rightEndCol, { fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } } });
+
+            worksheet.getRow(13).height = 10; // Gap before table
+
+            // 4. TABLE HEADERS (Row 14)
+            const headerRow = worksheet.getRow(14);
+            headerRow.height = 24;
+
+            const headers = isInternal 
+                ? ["NO.", "SKU", "BARCODE", "NAMA BARANG", "QTY", "SATUAN", "HARGA SATUAN", "DISC (%)", "DISC AMT", "JUMLAH"]
+                : ["NO.", "SKU", "BARCODE", "NAMA BARANG", "QTY", "SATUAN"];
+
+            headers.forEach((h, idx) => {
+                const colNum = idx + 1;
+                const cell = worksheet.getCell(14, colNum);
+                cell.value = h;
+                cell.font = { name: 'Inter', size: 9, bold: true, color: { argb: 'FF0F172A' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } }; // Light Gray Header Fill
+                cell.border = thinBorder;
+
+                if (h === "NO." || h === "SATUAN") {
+                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                } else if (h === "QTY" || h.includes("HARGA") || h.includes("DISC") || h === "JUMLAH") {
+                    cell.alignment = { vertical: 'middle', horizontal: 'right' };
+                } else {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                }
+            });
+
+            // 5. TABLE DATA ROWS
+            let currentRowIdx = 15;
+            currentItems.forEach((item, index) => {
+                const itemRow = worksheet.getRow(currentRowIdx);
+                itemRow.height = 20;
+
+                const qty = parseFloat(item.qty) || 0;
+                const price = parseFloat(item.price) || 0;
+                const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
+
+                const discountedPrice = price * (1 - d1 / 100);
+                const discAmount = (price - discountedPrice) * qty;
+                const lineTotal = qty * discountedPrice;
+
+                // NO.
+                const c1 = worksheet.getCell(currentRowIdx, 1);
+                c1.value = index + 1;
+                c1.font = { name: 'Inter', size: 9, color: { argb: 'FF334155' } };
+                c1.alignment = { vertical: 'middle', horizontal: 'center' };
+                c1.border = thinBorder;
+
+                // SKU
+                const c2 = worksheet.getCell(currentRowIdx, 2);
+                c2.value = String(item.sku || '');
+                c2.font = { name: 'Consolas', size: 9, color: { argb: 'FF1E293B' } };
+                c2.alignment = { vertical: 'middle', horizontal: 'left' };
+                c2.border = thinBorder;
+
+                // BARCODE
+                const c3 = worksheet.getCell(currentRowIdx, 3);
+                c3.value = String(item.barcode || '');
+                c3.font = { name: 'Consolas', size: 9, color: { argb: 'FF1E293B' } };
+                c3.alignment = { vertical: 'middle', horizontal: 'left' };
+                c3.border = thinBorder;
+
+                // NAMA BARANG
+                const c4 = worksheet.getCell(currentRowIdx, 4);
+                c4.value = item.name || '';
+                c4.font = { name: 'Inter', size: 9, bold: true, color: { argb: 'FF0F172A' } };
+                c4.alignment = { vertical: 'middle', horizontal: 'left' };
+                c4.border = thinBorder;
+
+                // QTY (Strict Number Formatting without trailing commas)
+                const c5 = worksheet.getCell(currentRowIdx, 5);
+                c5.value = qty;
+                c5.font = { name: 'Inter', size: 9, bold: true, color: { argb: 'FF0F172A' } };
+                c5.alignment = { vertical: 'middle', horizontal: 'right' };
+                c5.numFmt = (qty % 1 === 0) ? '#,##0' : '#,##0.##';
+                c5.border = thinBorder;
+
+                // SATUAN
+                const c6 = worksheet.getCell(currentRowIdx, 6);
+                c6.value = item.unit || '';
+                c6.font = { name: 'Inter', size: 9, color: { argb: 'FF334155' } };
+                c6.alignment = { vertical: 'middle', horizontal: 'center' };
+                c6.border = thinBorder;
+
+                if (isInternal) {
+                    const c7 = worksheet.getCell(currentRowIdx, 7);
+                    c7.value = price;
+                    c7.font = { name: 'Consolas', size: 9, color: { argb: 'FF1E293B' } };
+                    c7.alignment = { vertical: 'middle', horizontal: 'right' };
+                    c7.numFmt = '#,##0';
+                    c7.border = thinBorder;
+
+                    const c8 = worksheet.getCell(currentRowIdx, 8);
+                    c8.value = d1;
+                    c8.font = { name: 'Consolas', size: 9, color: { argb: 'FF1E293B' } };
+                    c8.alignment = { vertical: 'middle', horizontal: 'right' };
+                    c8.numFmt = '0.0"%"';
+                    c8.border = thinBorder;
+
+                    const c9 = worksheet.getCell(currentRowIdx, 9);
+                    c9.value = discAmount;
+                    c9.font = { name: 'Consolas', size: 9, color: { argb: 'FF1E293B' } };
+                    c9.alignment = { vertical: 'middle', horizontal: 'right' };
+                    c9.numFmt = '#,##0';
+                    c9.border = thinBorder;
+
+                    const c10 = worksheet.getCell(currentRowIdx, 10);
+                    c10.value = lineTotal;
+                    c10.font = { name: 'Consolas', size: 9, bold: true, color: { argb: 'FF0F172A' } };
+                    c10.alignment = { vertical: 'middle', horizontal: 'right' };
+                    c10.numFmt = '#,##0';
+                    c10.border = thinBorder;
+                }
+
+                currentRowIdx++;
+            });
+
+            // 6. SUMMARY SECTION (If Internal)
+            if (isInternal) {
+                currentRowIdx++;
+                let subtotal = 0;
+                currentItems.forEach(item => {
+                    const qty = parseFloat(item.qty) || 0;
+                    const price = parseFloat(item.price) || 0;
+                    const d1 = Math.min(100, Math.max(0, parseFloat(item.disc1) || 0));
+                    subtotal += (qty * price * (1 - d1 / 100));
+                });
+
+                const extraDiscount = parseFloat(document.getElementById('extra-discount')?.value) || 0;
+                const ppnRate = parseFloat(document.getElementById('ppn-rate')?.value) || 0;
+                const afterExtraDisc = Math.max(0, subtotal - extraDiscount);
+                const ppnAmount = afterExtraDisc * (ppnRate / 100);
+                const grandTotal = afterExtraDisc + ppnAmount;
+
+                const summaryData = [
+                    { label: "Sub Total:", val: subtotal, bold: false },
+                    { label: "Diskon Tambahan:", val: extraDiscount, bold: false },
+                    { label: `PPn (${ppnRate}%):`, val: ppnAmount, bold: false },
+                    { label: "Total Keseluruhan:", val: grandTotal, bold: true, color: 'FF1D4ED8' }
+                ];
+
+                summaryData.forEach(s => {
+                    const row = worksheet.getRow(currentRowIdx);
+                    row.height = 20;
+
+                    const lblCell = worksheet.getCell(currentRowIdx, 9);
+                    lblCell.value = s.label;
+                    lblCell.font = { name: 'Inter', size: 9, bold: s.bold, color: { argb: s.color || 'FF334155' } };
+                    lblCell.alignment = { vertical: 'middle', horizontal: 'right' };
+                    lblCell.border = thinBorder;
+
+                    const valCell = worksheet.getCell(currentRowIdx, 10);
+                    valCell.value = s.val;
+                    valCell.font = { name: 'Consolas', size: 10, bold: s.bold, color: { argb: s.color || 'FF0F172A' } };
+                    valCell.alignment = { vertical: 'middle', horizontal: 'right' };
+                    valCell.numFmt = '#,##0';
+                    valCell.border = thinBorder;
+
+                    if (s.bold) {
+                        lblCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                        valCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    }
+
+                    currentRowIdx++;
+                });
+            }
+
+            // 7. NOTES SECTION
+            currentRowIdx += 2;
+            worksheet.getRow(currentRowIdx).height = 20;
+            worksheet.mergeCells(currentRowIdx, 1, currentRowIdx, totalCols);
+            const notesHeaderCell = worksheet.getCell(currentRowIdx, 1);
+            notesHeaderCell.value = "NOTE / CATATAN SYARAT & KETENTUAN:";
+            notesHeaderCell.font = { name: 'Inter', size: 9, bold: true, color: { argb: 'FF0F172A' } };
+
+            currentRowIdx++;
+            currentNotes.forEach((note, nIdx) => {
+                worksheet.getRow(currentRowIdx).height = 18;
+                worksheet.mergeCells(currentRowIdx, 1, currentRowIdx, totalCols);
+                const cell = worksheet.getCell(currentRowIdx, 1);
+                cell.value = `${nIdx + 1}. ${note}`;
+                cell.font = { name: 'Inter', size: 8.5, color: { argb: 'FF334155' } };
+                currentRowIdx++;
+            });
+
+            // 8. SIGNATURES SECTION
+            currentRowIdx += 2;
+            const midCol = Math.floor(totalCols / 2);
+
+            worksheet.getRow(currentRowIdx).height = 20;
+            worksheet.mergeCells(currentRowIdx, 1, currentRowIdx, midCol);
+            worksheet.getCell(currentRowIdx, 1).value = signTitle1;
+            worksheet.getCell(currentRowIdx, 1).font = { name: 'Inter', size: 9, color: { argb: 'FF475569' } };
+            worksheet.getCell(currentRowIdx, 1).alignment = { horizontal: 'center' };
+
+            worksheet.mergeCells(currentRowIdx, midCol + 1, currentRowIdx, totalCols);
+            worksheet.getCell(currentRowIdx, midCol + 1).value = signTitle2;
+            worksheet.getCell(currentRowIdx, midCol + 1).font = { name: 'Inter', size: 9, color: { argb: 'FF475569' } };
+            worksheet.getCell(currentRowIdx, midCol + 1).alignment = { horizontal: 'center' };
+
+            currentRowIdx += 4; // Space for signature
+
+            worksheet.getRow(currentRowIdx).height = 20;
+            worksheet.mergeCells(currentRowIdx, 1, currentRowIdx, midCol);
+            worksheet.getCell(currentRowIdx, 1).value = signName1;
+            worksheet.getCell(currentRowIdx, 1).font = { name: 'Inter', size: 9, bold: true, color: { argb: 'FF1E293B' } };
+            worksheet.getCell(currentRowIdx, 1).alignment = { horizontal: 'center' };
+
+            worksheet.mergeCells(currentRowIdx, midCol + 1, currentRowIdx, totalCols);
+            worksheet.getCell(currentRowIdx, midCol + 1).value = signName2;
+            worksheet.getCell(currentRowIdx, midCol + 1).font = { name: 'Inter', size: 9, bold: true, color: { argb: 'FF1E293B' } };
+            worksheet.getCell(currentRowIdx, midCol + 1).alignment = { horizontal: 'center' };
+
+            // Footer disclaimer
+            if (footerNote) {
+                currentRowIdx += 2;
+                worksheet.mergeCells(currentRowIdx, 1, currentRowIdx, totalCols);
+                const fCell = worksheet.getCell(currentRowIdx, 1);
+                fCell.value = footerNote;
+                fCell.font = { name: 'Inter', size: 8, italic: true, color: { argb: 'FF94A3B8' } };
+                fCell.alignment = { horizontal: 'right' };
+            }
+
+            // Write Buffer & Trigger Download
+            const buffer = await workbook.xlsx.writeBuffer();
+            const cleanPoNum = poNum.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `${cleanPoNum || 'Purchase_Order'}_${activeMode.toUpperCase()}.xlsx`;
+
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, fileName);
+
+            closeExcelPreview();
+            showToast(`File Excel (.xlsx) berhasil diunduh dengan presisi A4!`);
+        }
+
+        /* Initializer */
         window.addEventListener('DOMContentLoaded', () => {
             renderNotes();
             switchView('supplier');
